@@ -3,7 +3,7 @@
     "Author": "Macki",
     "Name": "Glance",
     "InternalName": "Glance",
-    "AssemblyVersion": "0.2.2.0",
+    "AssemblyVersion": "0.2.3.0",
     "Description": "Public beta. Meet your character's gaze when you zoom in, with an occasional wink and smile. Configure with /glance. Camera tracking and expression timing are experimental. Icon created with AI assistance.",
     "Punchline": "A little eye contact. A little personality.",
     "ApplicableVersion": "any",
@@ -15,12 +15,12 @@
     ],
     "RepoUrl": "https://github.com/khamass/Glance",
     "IconUrl": "https://raw.githubusercontent.com/khamass/Glance/main/images/icon.png",
-    "Changelog": "Initial public beta by Macki: camera gaze, close-up settings, and occasional wink/smile expressions.",
+    "Changelog": "Zooming out now immediately resets the facial expression with /straightface, cancels queued expressions, and retries neutral once after 0.65 seconds.",
     "IsHide": false,
     "IsTestingExclusive": false,
-    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v0.2.2/Glance.zip",
-    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v0.2.2/Glance.zip",
-    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v0.2.2/Glance.zip",
-    "LastUpdate": 1792073018
+    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v0.2.3/Glance.zip",
+    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v0.2.3/Glance.zip",
+    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v0.2.3/Glance.zip",
+    "LastUpdate": 1792073877
   }
 ]
