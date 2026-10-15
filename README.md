@@ -33,6 +33,8 @@ If upgrading from the previous name, disable the old development plugin and repl
 
 ## Behavior
 
+- Zooming out beyond the close-up exit buffer sends `/straightface motion` and cancels pending wink/smile actions, even if movement already paused gaze. A single follow-up 0.65 seconds later covers an expression command rejected during the emote lock.
+
 - Version 0.1.12 keeps the 0.3-second smile attempt and repeats it once 0.35 seconds later, because text-command dispatch does not confirm that the game accepted a facial-expression change. The straight-face timer restarts from that follow-up. This is a bounded fallback, not confirmation of the game's animation-lock timing; verify in game.
 
 - Every fourth distinct camera turn can also queue the wink sequence while close and idle. A turn needs at least 10 degrees of accumulated yaw/pitch travel and a 0.3-second pause to finish. A continuous drag counts once. Zoom and turn counters are independent; simultaneous triggers merge into one pending wink. Both zooming and rotation must settle for 2 seconds before the wink, and expressions cannot overlap. Incomplete turns are discarded when gaze pauses.
@@ -64,3 +66,5 @@ Version 0.1.3 removes the jitter-producing off/on refresh cycle. It uses `/facec
 
 - [Dalamud plugin development](https://dalamud.dev/faq/getting-started/)
 - [FFXIVClientStructs](https://github.com/aers/FFXIVClientStructs)
+
+
