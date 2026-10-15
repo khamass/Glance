@@ -1,4 +1,6 @@
-# Glance v0.2.2 — Public beta
+# Glance v0.2.3 — Public beta
+
+Zooming out now immediately sends `/straightface motion` and cancels queued expression actions. This also works if movement paused gaze before you zoomed out. One follow-up after 0.65 seconds covers possible emote-lock rejection. In-game verification is still required.
 
 By **Macki**. A little eye contact. A little personality.
 
