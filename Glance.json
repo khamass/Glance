@@ -1,0 +1,15 @@
+{
+  "Author": "Macki",
+  "Name": "Glance",
+  "InternalName": "Glance",
+  "AssemblyVersion": "0.2.2.0",
+  "Description": "Public beta. Meet your character's gaze when you zoom in, with an occasional wink and smile. Configure with /glance. Camera tracking and expression timing are experimental. Icon created with AI assistance.",
+  "Punchline": "A little eye contact. A little personality.",
+  "ApplicableVersion": "any",
+  "DalamudApiLevel": 15,
+  "Tags": ["camera", "character", "posing"],
+  "RepoUrl": "https://github.com/khamass/Glance",
+  "IconUrl": "https://raw.githubusercontent.com/khamass/Glance/main/images/icon.png",
+  "Changelog": "Initial public beta by Macki: camera gaze, close-up settings, and occasional wink/smile expressions."
+}
+

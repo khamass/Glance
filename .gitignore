@@ -1,0 +1,6 @@
+bin/
+obj/
+.dotnet/
+tests/bin/
+tests/obj/
+dist/
