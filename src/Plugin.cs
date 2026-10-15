@@ -50,6 +50,9 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private float zoomStillSeconds;
     private float previousZoom = float.NaN;
     private readonly RotationCadence rotationCadence = new();
+    private bool closeZoomSeen;
+    private nint neutralResetPlayer;
+    private float neutralRetryRemaining;
 
     public Plugin()
     {
@@ -183,9 +186,39 @@ public sealed unsafe class Plugin : IDalamudPlugin
         var position = player.Position;
         if (lastPlayer != player.Address)
         {
+            closeZoomSeen = false; neutralResetPlayer = 0;
             FinishWink(); FinishSmile(); winkCadence.LeaveZoom();
             ReleaseGaze(); lastPlayer = player.Address; lastPosition = position; idleSeconds = 0;
             Pause("Waiting for idle"); return;
+        }
+        if (neutralResetPlayer != 0)
+        {
+            neutralRetryRemaining -= Math.Max(dt, 0f);
+            if (neutralRetryRemaining <= 0)
+            {
+                if (player.Address == neutralResetPlayer) ExecuteGameCommand("/straightface motion");
+                neutralResetPlayer = 0;
+            }
+        }
+        // Observe the physical zoom exit even if movement already paused gaze.
+        // Cancel the expression sequence before sending neutral: /smile followed
+        // immediately by /straightface can hit the game's emote lock.
+        var exitCameraManager = CameraManager.Instance();
+        if (!config.Enabled) closeZoomSeen = false;
+        else if (exitCameraManager != null && exitCameraManager->ActiveCameraIndex == 0
+            && exitCameraManager->Camera != null)
+        {
+            var zoom = exitCameraManager->Camera->Distance;
+            if (float.IsFinite(zoom) && zoom <= config.Distance) closeZoomSeen = true;
+            else if (float.IsFinite(zoom) && zoom > config.Distance + 0.35f && closeZoomSeen)
+            {
+                closeZoomSeen = false;
+                winkPlayer = 0; smilePlayer = 0; winkPending = false;
+                smileRemaining = 0; straightfaceRemaining = 0; smileRetryRemaining = 0;
+                ExecuteGameCommand("/straightface motion");
+                neutralResetPlayer = player.Address;
+                neutralRetryRemaining = 0.65f;
+            }
         }
         if (smilePlayer != 0)
         {
