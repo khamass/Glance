@@ -1,16 +1,18 @@
 namespace Glance;
 
-public enum Personality { Wink, Playful, Friendly, Dramatic, Custom, Off }
-public enum ExpressionKind { Wink, Smile, FakeSmile, PuckerUp, Amazed, Taunt }
+// Append new values: existing settings persist these numeric identifiers.
+public enum Personality { Wink, Playful, Friendly, Dramatic, Custom, Off, Expressive }
+public enum ExpressionKind { Wink, Smile, FakeSmile, PuckerUp, Amazed, Taunt, Joy, Pose }
 
 [Flags]
 public enum ExpressionChoices
 {
     None = 0, Wink = 1, Smile = 2, FakeSmile = 4, PuckerUp = 8, Amazed = 16, Taunt = 32,
-    All = Wink | Smile | FakeSmile | PuckerUp | Amazed | Taunt,
+    Joy = 64, Pose = 128,
+    All = Wink | Smile | FakeSmile | PuckerUp | Amazed | Taunt | Joy | Pose,
 }
 
-public sealed record ExpressionDefinition(ExpressionKind Kind, string Name, string Command, float Hold)
+public sealed record ExpressionDefinition(ExpressionKind Kind, string Name, string Command, float Hold, bool BodyMotion = false)
 {
     public ExpressionChoices Choice => (ExpressionChoices)(1 << (int)Kind);
 }
@@ -25,6 +27,8 @@ public static class Expressions
         new(ExpressionKind.PuckerUp, "Pucker up", "/puckerup motion", 1.4f),
         new(ExpressionKind.Amazed, "Amazed", "/amazed motion", 2f),
         new(ExpressionKind.Taunt, "Taunt", "/taunt motion", 1.6f),
+        new(ExpressionKind.Joy, "Joy", "/joy motion", 4f, true),
+        new(ExpressionKind.Pose, "Pose", "/pose motion", 4f, true),
     ];
 
     public static ExpressionChoices Pool(Personality personality, ExpressionChoices custom) => personality switch
@@ -33,6 +37,7 @@ public static class Expressions
         Personality.Playful => ExpressionChoices.Wink | ExpressionChoices.PuckerUp,
         Personality.Friendly => ExpressionChoices.Smile | ExpressionChoices.FakeSmile,
         Personality.Dramatic => ExpressionChoices.Amazed | ExpressionChoices.Taunt,
+        Personality.Expressive => ExpressionChoices.Joy | ExpressionChoices.Pose,
         Personality.Custom => custom & ExpressionChoices.All,
         _ => ExpressionChoices.None,
     };

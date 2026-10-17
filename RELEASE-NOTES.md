@@ -1,6 +1,8 @@
-# Glance v0.3.0 — A little more personality
+# Glance v0.3.1 — Joy or pose
 
-Choose Wink (classic), Playful, Friendly, Dramatic, Custom, or Off (gaze only) in `/glance`. Expression pools include wink, smile, fake smile, pucker up, amazed, and taunt. Random selection avoids consecutive repeats when possible.
+New **Expressive** mood chooses between `/joy motion` and `/pose motion`, with no consecutive repeats. Both are available in Custom, with a default 4-second facial cleanup hold each. These are body-motion emotes: body animations finish naturally, including after zoom-out; `/straightface` resets the face only. Existing mood IDs and saved choices are preserved. Automated selection, timing, cleanup, and compatibility checks pass; in-game verification remains required.
+
+Choose Wink (classic), Playful, Friendly, Dramatic, Expressive, Custom, or Off (gaze only) in `/glance`. Available choices include wink, smile, fake smile, pucker up, amazed, taunt, joy, and pose. Random selection avoids consecutive repeats when possible.
 
 Adjust frequency from every 1–10 zoom-ins or distinct camera turns, the settle delay from 0–5 seconds, and each selected expression's duration from 0.1–5 seconds. Existing users keep wink, every fourth trigger, and a two-second delay by default.
 
@@ -8,7 +10,7 @@ Wink retains its smile transition; other expressions return directly to `/straig
 
 By **Macki**. A little eye contact. A little personality.
 
-Glance brings your character's head and eyes toward the camera during idle close-ups, with occasional wink, smile, and neutral-expression sequences. Body orientation stays under your control.
+Glance brings your character's head and eyes toward the camera during idle close-ups, with occasional expressions and optional body-motion emotes. Gaze tracking itself does not rotate the body.
 
 - Configure with `/glance` or use `/glance on`, `/glance off`, and `/glance toggle`.
 - Set your preferred close-up distance and gaze responsiveness.

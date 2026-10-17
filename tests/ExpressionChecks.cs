@@ -10,6 +10,19 @@ public static class ExpressionChecks
         Check(Expressions.Pool(Personality.Custom, ExpressionChoices.None) == ExpressionChoices.None, "Empty custom pool stays empty");
         Check(Expressions.Pool(Personality.Wink, ExpressionChoices.All) == ExpressionChoices.Wink, "Classic preset keeps wink default");
         Check(Expressions.Pool(Personality.Friendly, ExpressionChoices.All) == (ExpressionChoices.Smile | ExpressionChoices.FakeSmile), "Friendly preset contains smiles");
+        Check((int)Personality.Custom == 4 && (int)Personality.Off == 5, "Existing mood settings retain their IDs");
+        Check(Expressions.Pool(Personality.Expressive, ExpressionChoices.All) == (ExpressionChoices.Joy | ExpressionChoices.Pose), "Expressive preset contains only joy and pose");
+        Check(Expressions.Pool(Personality.Playful, ExpressionChoices.All) == (ExpressionChoices.Wink | ExpressionChoices.PuckerUp), "Playful pair remains unchanged");
+        Check(Expressions.All.Single(e => e.Kind == ExpressionKind.Joy).BodyMotion
+            && Expressions.All.Single(e => e.Kind == ExpressionKind.Pose).BodyMotion, "Joy and pose are identified as body motions");
+        var expressivePicker = new ExpressionPicker();
+        var expressiveRandom = new Random(3);
+        var expressivePair = Expressions.Pool(Personality.Expressive, ExpressionChoices.None);
+        var expressiveFirst = expressivePicker.Pick(expressivePair, expressiveRandom)!;
+        var expressiveSecond = expressivePicker.Pick(expressivePair, expressiveRandom)!;
+        Check(expressiveFirst.Kind != expressiveSecond.Kind
+            && (expressivePair & expressiveFirst.Choice) != 0 && (expressivePair & expressiveSecond.Choice) != 0,
+            "Expressive random choices stay within the pair and avoid repeats");
         var picker = new ExpressionPicker();
         var random = new Random(8);
         ExpressionKind? previous = null;

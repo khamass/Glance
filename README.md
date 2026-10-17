@@ -4,7 +4,7 @@
 
 ![Glance icon](images/icon.png)
 
-A Dalamud plugin for Final Fantasy XIV that activates the game's `/facecamera` gaze when you zoom in and stand still. Add a little personality with facial expressions, or keep gaze only. The body keeps its existing orientation.
+A Dalamud plugin for Final Fantasy XIV that activates the game's `/facecamera` gaze when you zoom in and stand still. Add facial expressions, opt into Joy/Pose body motions, or keep gaze only. Gaze tracking itself does not rotate the body.
 
 **Public beta:** camera tracking and expression timing are experimental. [Releases](https://github.com/khamass/Glance/releases).
 
@@ -33,7 +33,7 @@ If upgrading from the previous name, disable the old development plugin and repl
 
 ## Behavior
 
-### Personality settings (v0.3.0)
+### Personality settings (v0.3.1)
 
 Open `/glance` and choose a mood:
 
@@ -43,10 +43,13 @@ Open `/glance` and choose a mood:
 | Playful | Wink, pucker up |
 | Friendly | Smile, fake smile |
 | Dramatic | Amazed, taunt |
-| Custom | Any combination of the six expressions |
+| Expressive | Joy, pose (includes body motions) |
+| Custom | Any combination of the eight choices |
 | Off | Camera gaze only; no automatic facial emotes |
 
 Pools choose randomly and avoid consecutive repeats when more than one expression is selected. An empty custom pool behaves like Off. Wink remains the default for existing settings.
+
+Version 0.3.1 adds **Expressive**, choosing between `/joy motion` and `/pose motion`. Both are also available in Custom. These include body animations that finish naturally; `/straightface` clears facial expressions only and does not stop a body animation. Their default cleanup hold is 4 seconds each. Existing mood IDs and saved selections are preserved.
 
 Set frequency from every 1 to 10 zoom-ins or distinct camera turns (default 4). The counters remain independent. Set the camera-settle wait from 0 to 5 seconds (default 2). Under **Expression durations**, adjust each selected expression's hold from 0.1 to 5 seconds. Defaults: wink 0.3s, smile 2s, fake smile 1.8s, pucker up 1.4s, amazed 2s, taunt 1.6s.
 

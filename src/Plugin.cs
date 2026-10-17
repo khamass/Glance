@@ -349,7 +349,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             ImGui.Separator();
             ImGui.TextColored(new Vector4(0.92f, 0.78f, 0.49f, 1), "PERSONALITY");
             var personality = (int)config.Personality;
-            if (ImGui.Combo("Mood", ref personality, "Wink (classic)\0Playful\0Friendly\0Dramatic\0Custom\0Off - gaze only\0"))
+            if (ImGui.Combo("Mood", ref personality, "Wink (classic)\0Playful\0Friendly\0Dramatic\0Custom\0Off - gaze only\0Expressive (joy / pose)\0"))
             { config.Personality = (Personality)personality; changed = true; }
             if (config.Personality == Personality.Custom)
             {
@@ -365,6 +365,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 }
             }
             var pool = Expressions.Pool(config.Personality, config.CustomExpressions);
+            if ((pool & (ExpressionChoices.Joy | ExpressionChoices.Pose)) != 0)
+                ImGui.TextWrapped("Joy and Pose include body motions. Hold controls facial cleanup timing; body animations finish naturally, including after zoom-out.");
             if (config.Personality != Personality.Off)
             {
                 ImGui.TextWrapped(pool == ExpressionChoices.None ? "Choose at least one expression. Gaze stays enabled."
