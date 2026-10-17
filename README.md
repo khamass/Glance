@@ -92,3 +92,11 @@ Version 0.1.3 removes the jitter-producing off/on refresh cycle. It uses `/facec
 - [FFXIVClientStructs](https://github.com/aers/FFXIVClientStructs)
 
 
+# Extended close-up (v0.4.0)
+
+In `/glance`, enable **Extended close-up**, then scroll in. **Closest camera distance** controls the closest allowed third-person distance (0.10–1.50 yalms, default 0.50); smaller values allow tighter close-ups. **Close-up distance** remains the gaze activation threshold. Your own character bypasses the camera's proximity-hiding check during close-ups. Other characters retain normal visibility rules.
+
+The option is off by default and restores the previous camera minimum when disabled or unloaded. It also pauses during combat, PvP, mounts, casting, cutscenes, transitions, group pose and occupied activity. First person remains a separate mode: scroll back out before changing perspective. Very small distances may put the camera inside the face; increase the slider if geometry clips. This does not change camera target height or increase maximum zoom-out distance.
+
+Build and automated camera-limit restoration checks pass; rendering and scrolling need in-game testing. Extended camera bounds are for the custom-repository beta and are excluded by the [official Dalamud publishing restrictions](https://dalamud.dev/plugin-publishing/restrictions/).
+

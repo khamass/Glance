@@ -2,6 +2,7 @@ using System.Numerics;
 using Glance;
 
 ExpressionChecks.Run();
+CloseUpChecks.Run();
 
 static void Check(bool ok, string message)
 {

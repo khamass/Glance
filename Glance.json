@@ -2,7 +2,7 @@
   "Author": "Macki",
   "Name": "Glance",
   "InternalName": "Glance",
-  "AssemblyVersion": "0.3.1.0",
+  "AssemblyVersion": "0.4.0.0",
   "Description": "Public beta. Meet your character's gaze during idle close-ups. Choose Wink, Playful, Friendly, Dramatic, Expressive, Custom, or gaze-only mode in /glance. Expressive adds Joy/Pose body motions. Camera tracking and expression timing are experimental. Icon created with AI assistance.",
   "Punchline": "A little eye contact. A little personality.",
   "ApplicableVersion": "any",
@@ -10,6 +10,6 @@
   "Tags": ["camera", "character", "posing"],
   "RepoUrl": "https://github.com/khamass/Glance",
   "IconUrl": "https://raw.githubusercontent.com/khamass/Glance/main/images/icon.png",
-  "Changelog": "New Expressive pair: /joy or /pose, also available in Custom. These include body motions that finish naturally; /straightface resets facial expressions only. Existing moods and settings are preserved."
+  "Changelog": "Optional Extended close-up: scroll closer than the normal minimum with a 0.10–1.50 yalm distance slider. Keeps your own character visible during third-person close-ups. Disabled by default; restores camera limits on disable, unload and activity pauses. Experimental; requires in-game testing."
 }
 

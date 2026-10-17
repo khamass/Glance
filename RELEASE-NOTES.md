@@ -1,4 +1,14 @@
-# Glance v0.3.1 — Joy or pose
+# Glance v0.4.0 — Extended close-up
+
+Enable **Extended close-up** in `/glance` to scroll closer than the normal game minimum. **Closest camera distance** sets the scroll limit from 0.10–1.50 yalms (default 0.50). The existing Close-up distance slider still controls when gaze activates.
+
+During eligible third-person close-ups, Glance bypasses proximity hiding for your own character only. First-person mode remains available and intentionally hides the character; scroll out before switching perspective. Extremely small distances can put the camera inside the model: increase the slider if facial geometry clips. Camera target height is unchanged.
+
+The feature starts disabled. Combat, PvP, mounts, casting, cutscenes, transitions, group pose and occupied activity suspend it. Disabling Glance, disabling the option or unloading restores the original minimum and moves a too-close third-person camera back to that minimum. Restoring respects subsequent changes from other camera plugins. Hook initialization failures leave normal camera limits in place and show a settings message.
+
+Release build and automated ownership/restoration checks pass. Close-up rendering and scroll behavior still require in-game verification. This is a custom-repository beta; extended camera bounds do not meet the official Dalamud repository publishing restrictions.
+
+## Previous: v0.3.1 — Joy or pose
 
 New **Expressive** mood chooses between `/joy motion` and `/pose motion`, with no consecutive repeats. Both are available in Custom, with a default 4-second facial cleanup hold each. These are body-motion emotes: body animations finish naturally, including after zoom-out; `/straightface` resets the face only. Existing mood IDs and saved choices are preserved. Automated selection, timing, cleanup, and compatibility checks pass; in-game verification remains required.
 

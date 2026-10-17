@@ -9,6 +9,8 @@ public sealed class Configuration : IPluginConfiguration
     public bool Enabled = true;
     public float Distance = 3.0f;
     public float Response = 45.0f;
+    public bool ExtendedCloseUp;
+    public float MinimumCameraDistance = 0.5f;
     public Personality Personality = Personality.Wink;
     public ExpressionChoices CustomExpressions = ExpressionChoices.Wink;
     public int ExpressionFrequency = 4;
@@ -30,6 +32,7 @@ public sealed class Configuration : IPluginConfiguration
         }
         Distance = float.IsFinite(Distance) ? Math.Clamp(Distance, 1f, 10f) : 3f;
         Response = float.IsFinite(Response) ? Math.Clamp(Response, 5f, 90f) : 45f;
+        MinimumCameraDistance = CloseUpLimit.Sanitize(MinimumCameraDistance);
         if (!Enum.IsDefined(Personality)) Personality = Personality.Wink;
         CustomExpressions &= ExpressionChoices.All;
         ExpressionFrequency = Math.Clamp(ExpressionFrequency, 1, 10);

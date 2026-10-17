@@ -25,6 +25,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
     [PluginService] internal static ICommandManager Commands { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
     [PluginService] internal static ITextureProvider Textures { get; private set; } = null!;
+    [PluginService] internal static IGameInteropProvider Interop { get; private set; } = null!;
 
     private readonly Configuration config;
     private bool open;
@@ -48,6 +49,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private bool closeZoomSeen;
     private readonly ExpressionPlayback expressions = new();
     private readonly ExpressionPicker expressionPicker = new();
+    private ExtendedCloseUp? closeUp;
+    private string? closeUpError;
 
     public Plugin()
     {
@@ -90,6 +93,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             default: open = !open; return;
         }
         Pause(config.Enabled ? "Enabled" : "Disabled");
+        if (!config.Enabled) closeUp?.Restore();
         Interface.SavePluginConfig(config);
     }
 
@@ -144,13 +148,41 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
     private void Update(IFramework framework)
     {
-        try { Tick((float)framework.UpdateDelta.TotalSeconds); }
+        try
+        {
+            UpdateCloseUp();
+            Tick((float)framework.UpdateDelta.TotalSeconds);
+        }
         catch (Exception ex)
         {
             config.Enabled = false;
+            closeUp?.Restore();
             Pause("Disabled after an error; see /xllog");
             Log.Error(ex, "Glance update failed; disabled until manually enabled.");
         }
+    }
+
+    private void UpdateCloseUp()
+    {
+        var player = Objects.LocalPlayer;
+        var eligible = config.Enabled && config.ExtendedCloseUp && player != null && Client.IsLoggedIn
+            && !Client.IsGPosing && !Client.IsPvP && !player.IsDead
+            && !Condition[ConditionFlag.InCombat] && !Condition[ConditionFlag.Mounted]
+            && !Condition[ConditionFlag.WatchingCutscene] && !Condition[ConditionFlag.WatchingCutscene78]
+            && !Condition[ConditionFlag.OccupiedInCutSceneEvent] && !Condition[ConditionFlag.OccupiedInEvent]
+            && !Condition[ConditionFlag.OccupiedInQuestEvent] && !Condition[ConditionFlag.BetweenAreas]
+            && !Condition[ConditionFlag.BetweenAreas51] && !Condition[ConditionFlag.Casting]
+            && !Condition[ConditionFlag.Occupied];
+        if (eligible && closeUp == null && closeUpError == null)
+        {
+            try { closeUp = new ExtendedCloseUp(Interop); }
+            catch (Exception ex)
+            {
+                closeUpError = "Extended close-up unavailable; see /xllog";
+                Log.Error(ex, "Could not initialize close-up visibility hook; camera limits unchanged.");
+            }
+        }
+        closeUp?.Update(eligible, player?.Address ?? 0, config.MinimumCameraDistance);
     }
 
     private void Tick(float dt)
@@ -343,6 +375,15 @@ public sealed unsafe class Plugin : IDalamudPlugin
             var changed = ImGui.Checkbox("Meet my gaze", ref config.Enabled);
             changed |= ImGui.SliderFloat("Close-up distance", ref config.Distance, 1f, 10f, "%.1f yalms");
             changed |= ImGui.SliderFloat("Gaze responsiveness", ref config.Response, 5f, 90f, "%.0f");
+            ImGui.Spacing();
+            changed |= ImGui.Checkbox("Extended close-up", ref config.ExtendedCloseUp);
+            if (config.ExtendedCloseUp)
+            {
+                changed |= ImGui.SliderFloat("Closest camera distance", ref config.MinimumCameraDistance, 0.1f, 1.5f, "%.2f yalms");
+                ImGui.TextWrapped("Scroll closer than the normal game limit. Smaller values allow a tighter close-up. Keeps your character visible in third person; scroll back out before switching to first person.");
+                ImGui.TextWrapped("Pauses during combat, mounts, cutscenes, group pose and other game activity. Original camera limits return when disabled.");
+                if (closeUpError != null) ImGui.TextWrapped(closeUpError);
+            }
             if (ImGui.Button("Use current zoom") && float.IsFinite(distance) && distance >= 1f)
             { config.Distance = Math.Clamp(distance, 1f, 10f); changed = true; }
             ImGui.Spacing();
@@ -388,6 +429,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             {
                 Pause("Settings updated"); winkCadence.Reset(); rotationCadence.Reset();
                 config.Sanitize(); Interface.SavePluginConfig(config);
+                if (!config.Enabled || !config.ExtendedCloseUp) closeUp?.Restore();
             }
             ImGui.Separator();
             ImGui.TextColored(active ? new Vector4(0.39f, 0.84f, 0.79f, 1)
@@ -404,6 +446,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
     public void Dispose()
     {
+        closeUp?.Dispose();
         CancelExpression();
         expressions.Discard();
         ReleaseGaze();
