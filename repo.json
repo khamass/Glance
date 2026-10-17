@@ -3,8 +3,8 @@
     "Author": "Macki",
     "Name": "Glance",
     "InternalName": "Glance",
-    "AssemblyVersion": "0.2.3.0",
-    "Description": "Public beta. Meet your character's gaze when you zoom in, with an occasional wink and smile. Configure with /glance. Camera tracking and expression timing are experimental. Icon created with AI assistance.",
+    "AssemblyVersion": "0.3.0.0",
+    "Description": "Public beta. Meet your character's gaze during idle close-ups. Choose Wink, Playful, Friendly, Dramatic, Custom, or gaze-only mode; tune expression frequency and duration in /glance. Camera tracking and expression timing are experimental. Icon created with AI assistance.",
     "Punchline": "A little eye contact. A little personality.",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 15,
@@ -15,12 +15,12 @@
     ],
     "RepoUrl": "https://github.com/khamass/Glance",
     "IconUrl": "https://raw.githubusercontent.com/khamass/Glance/main/images/icon.png",
-    "Changelog": "Zooming out now immediately resets the facial expression with /straightface, cancels queued expressions, and retries neutral once after 0.65 seconds.",
+    "Changelog": "Personality presets, custom expression pools, adjustable frequency and durations, and a gaze-only Off option. Random selections avoid consecutive repeats; zoom-out cancels expressions and resets to neutral.",
     "IsHide": false,
     "IsTestingExclusive": false,
-    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v0.2.3/Glance.zip",
-    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v0.2.3/Glance.zip",
-    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v0.2.3/Glance.zip",
-    "LastUpdate": 1792073877
+    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v0.3.0/Glance.zip",
+    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v0.3.0/Glance.zip",
+    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v0.3.0/Glance.zip",
+    "LastUpdate": 1792233799
   }
 ]
