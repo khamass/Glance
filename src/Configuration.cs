@@ -12,6 +12,7 @@ public sealed class Configuration : IPluginConfiguration
     public bool ExtendedCloseUp;
     public bool FineCloseUpZoom = true;
     public float CloseUpZoomDelta = 0.1f;
+    public float CloseUpTransitionSeconds = 0.35f;
     public bool OverrideCloseUpAngle = true;
     public float CloseUpCameraAngle = 50f;
     public float CloseUpAngleDistance = 1.5f;
@@ -42,6 +43,7 @@ public sealed class Configuration : IPluginConfiguration
         Response = float.IsFinite(Response) ? Math.Clamp(Response, 5f, 90f) : 45f;
         MinimumCameraDistance = CloseUpLimit.Sanitize(MinimumCameraDistance);
         CloseUpZoomDelta = CloseUpZoom.Sanitize(CloseUpZoomDelta);
+        CloseUpTransitionSeconds = float.IsFinite(CloseUpTransitionSeconds) ? Math.Clamp(CloseUpTransitionSeconds, 0.1f, 1.5f) : 0.35f;
         CloseUpCameraAngle = float.IsFinite(CloseUpCameraAngle) ? Math.Clamp(CloseUpCameraAngle, 0f, 100f) : 50f;
         CloseUpAngleDistance = float.IsFinite(CloseUpAngleDistance) ? Math.Clamp(CloseUpAngleDistance, 0.2f, 3f) : 1.5f;
         if (!Enum.IsDefined(Personality)) Personality = Personality.Wink;

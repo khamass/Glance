@@ -12,7 +12,6 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
 {
     private readonly Hook<CameraBase.Delegates.ShouldDrawGameObject> visibility;
     private readonly CloseUpLimit limit = new();
-    private readonly CloseUpAngle angle = new();
     private readonly CameraAngleSetting angleSetting = new();
     private readonly IGameConfig gameConfig;
     private readonly IGameInteropProvider interop;
@@ -20,10 +19,11 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
     private bool fineZoom;
     private float zoomThreshold;
     private float zoomDelta;
+    private float angleBlend;
     private float requestedTilt = CloseUpAngle.Angle50;
     private int mismatchedFrames;
     public bool PossibleAngleConflict => mismatchedFrames >= 15;
-    public bool AngleActive => angle.Active;
+    public bool AngleActive => angleSetting.Original.HasValue;
     private nint cameraAddress;
     private nint playerAddress;
     public bool Active => limit.Active;
@@ -38,7 +38,7 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
     }
 
     public void Update(bool eligible, nint player, float minimum, bool overrideAngle, float angleValue, float angleDistance,
-        bool fineZoomEnabled, float closeUpDistance, float delta)
+        bool fineZoomEnabled, float closeUpDistance, float delta, float dt, float transitionSeconds)
     {
         var manager = CameraManager.Instance();
         var camera = manager == null ? null : manager->Camera;
@@ -69,14 +69,21 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
         camera->MinDistance = limit.Apply(camera->MinDistance, minimum);
         // Raising the slider must also move an already closer camera back out.
         ClampDistance(camera, camera->MinDistance);
-        var wasClose = angle.Active;
+        var wasClose = AngleActive;
         if (wasClose && gameConfig.TryGet(UiControlOption.TiltOffset, out float configured)
             && MathF.Abs(configured - requestedTilt) > 0.002f)
             mismatchedFrames = Math.Min(mismatchedFrames + 1, 120);
         else mismatchedFrames = Math.Max(0, mismatchedFrames - 1);
-        requestedTilt = CloseUpAngle.ToNative(angleValue);
-        if (overrideAngle && angle.Update(camera->Distance, angleDistance))
+        var targetBlend = overrideAngle ? CloseUpTransition.Weight(camera->Distance, angleDistance) : 0f;
+        angleBlend = CloseUpTransition.Smooth(angleBlend, targetBlend, dt, transitionSeconds);
+        if (overrideAngle && (targetBlend > 0 || angleBlend > 0))
         {
+            if (gameConfig.TryGet(UiControlOption.TiltOffset, out float current))
+            {
+                angleSetting.Apply(current, current, WriteAngleSetting);
+                var baseline = angleSetting.Original ?? current;
+                requestedTilt = baseline + (CloseUpAngle.ToNative(angleValue) - baseline) * angleBlend;
+            }
             ApplyAngleSetting();
             camera->UpdateTiltOffset();
         }
@@ -105,14 +112,15 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
 
     private void RestoreAngle(bool restore = false)
     {
+        var hadAngle = AngleActive;
         angleSetting.Restore(WriteAngleSetting);
         var manager = CameraManager.Instance();
-        if ((angle.Active || restore) && manager != null && (nint)manager->Camera == cameraAddress)
+        if ((hadAngle || restore) && manager != null && (nint)manager->Camera == cameraAddress)
         {
             // Recalculate framing from the restored Character Configuration value.
             manager->Camera->UpdateTiltOffset();
         }
-        angle.Reset();
+        angleBlend = 0;
         mismatchedFrames = 0;
     }
 

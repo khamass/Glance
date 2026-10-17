@@ -12,9 +12,21 @@ internal static class CloseUpChecks
         var limit = new CloseUpLimit();
         Check(CloseUpZoom.Apply(0.75f, true, 1f, 3f, 0.1f) == 0.1f,
             "Close-up uses the selected zoom delta");
-        Check(CloseUpZoom.Apply(0.75f, true, 3.01f, 3f, 0.1f) == 0.75f
+        Check(CloseUpZoom.Apply(0.75f, true, 3.76f, 3f, 0.1f) == 0.75f
             && CloseUpZoom.Apply(0.75f, false, 1f, 3f, 0.1f) == 0.75f,
             "Outside close-up or disabled returns the original zoom speed");
+        var midZoom = CloseUpZoom.Apply(0.75f, true, 3.375f, 3f, 0.1f);
+        Check(MathF.Abs(midZoom - 0.425f) < 0.00001f, "Zoom speed blends halfway across the transition band");
+        Check(MathF.Abs(CloseUpZoom.Apply(0.75f, true, 3.0001f, 3f, 0.1f) - 0.1f) < 0.00001f,
+            "Zoom boundary is continuous without a step change");
+        var blend30 = 0f;
+        var blend60 = 0f;
+        for (var frame = 0; frame < 3; frame++) blend30 = CloseUpTransition.Smooth(blend30, 1, 1f / 30, 0.35f);
+        for (var frame = 0; frame < 6; frame++) blend60 = CloseUpTransition.Smooth(blend60, 1, 1f / 60, 0.35f);
+        Check(MathF.Abs(blend30 - blend60) < 0.00001f && blend60 > 0 && blend60 < 1,
+            "Angle easing is frame-rate independent and does not snap");
+        for (var frame = 0; frame < 120; frame++) blend60 = CloseUpTransition.Smooth(blend60, 0, 1f / 60, 0.35f);
+        Check(blend60 == 0, "Zoom-out easing reaches exact zero so original setting can be restored");
         Check(CloseUpZoom.Apply(0.75f, true, float.NaN, 3f, 0.1f) == 0.75f
             && CloseUpZoom.Apply(0.75f, true, 0f, 3f, 0.1f) == 0.75f,
             "Invalid camera distance preserves the original zoom behavior");

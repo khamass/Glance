@@ -126,3 +126,7 @@ Game-data loading, localized commands, unlock refresh and actual animations need
 ## Fine close-up zoom (v0.5.1)
 
 Under **Extended close-up**, enable **Fine close-up zoom** and adjust **Close-up zoom delta** (0.01–1.00, default 0.10). Smaller values give finer zoom steps. It applies in both directions within **Close-up distance**, independently of the angle activation distance. Outside that range, or when the feature is disabled/paused, the original camera zoom speed is used. Closest camera distance still sets the final zoom limit. Other camera plugins can affect the result; scrolling and input-device behavior require in-game testing.
+
+## Smooth transitions (v0.5.2)
+
+Zoom speed blends over the 0.75 yalms before **Close-up distance**. Camera angle blends over the 0.75 yalms before **Angle activation distance** and eases over time; set **Close-up transition time** (0.10–1.50 seconds, default 0.35) to adjust the angle response. Zooming out reverses the blend and then restores the exact captured angle. Disabling or pausing restores immediately. This replaces the abrupt switches and the previous angle exit margin. In-game feel and other-plugin compatibility require testing.

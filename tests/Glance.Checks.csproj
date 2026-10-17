@@ -12,6 +12,7 @@
   <ItemGroup><Compile Include="..\src\CloseUpLimit.cs" Link="CloseUpLimit.cs" /></ItemGroup>
   <ItemGroup><Compile Include="..\src\CloseUpAngle.cs" Link="CloseUpAngle.cs" /></ItemGroup>
   <ItemGroup><Compile Include="..\src\CloseUpZoom.cs" Link="CloseUpZoom.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\CloseUpTransition.cs" Link="CloseUpTransition.cs" /></ItemGroup>
   <ItemGroup><Compile Include="..\src\CameraAngleSetting.cs" Link="CameraAngleSetting.cs" /></ItemGroup>
   <ItemGroup><Compile Include="..\src\PersonalityThemes.cs" Link="PersonalityThemes.cs" /></ItemGroup>
 </Project>

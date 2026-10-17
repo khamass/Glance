@@ -1,3 +1,11 @@
+# Glance v0.5.2 — Smooth close-up transitions
+
+Fine zoom now blends the original zoom speed into the selected delta across the 0.75 yalms before Close-up distance, with a smoothstep curve. The same band works in reverse when zooming out. There is no abrupt delta switch at the close-up boundary.
+
+The camera angle uses a similar distance blend before Angle activation distance, plus frame-rate-independent time easing. **Close-up transition time** ranges from 0.10–1.50 seconds, default 0.35; it controls angle easing response. The original configured angle is captured once, remains the blend baseline, and is restored exactly when the exit blend completes. Disabling, pausing, changing camera mode or unloading still restores immediately rather than delaying cleanup. Minimum-distance limits remain unchanged.
+
+Build and automated continuity, frame-rate and exact-restoration checks pass. Actual framing and scrolling with camera plugins still require in-game testing.
+
 # Glance v0.5.1 — Fine close-up zoom
 
 Adds **Fine close-up zoom** and a **Close-up zoom delta** slider under Extended close-up. Delta ranges from 0.01 to 1.00, default 0.10. Smaller values give finer zoom steps. The override applies in both directions while within the existing Close-up distance, so zooming back out is also controlled. Outside that distance the original camera zoom-speed function is used.
