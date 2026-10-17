@@ -1,6 +1,6 @@
 # Publishing Glance
 
-Target repository: `https://github.com/khamass/Glance` (public, default branch `main`). These are prepared destinations, not a claim that the repository or release exists.
+Repository: `https://github.com/khamass/Glance` (public, default branch `main`).
 
 ## Prepare locally
 
@@ -12,7 +12,7 @@ The ZIP allowlist is exactly `Glance.dll`, `Glance.json`, `images/icon.png`, and
 
 1. Create the public repository `khamass/Glance` with default branch `main`.
 2. Commit source, tests, scripts, README, LICENSE, release notes, publishing instructions, manifest, generated `repo.json`, and `images/`. Exclude `bin/`, `obj/`, `.dotnet/`, and `dist/` using `.gitignore`.
-3. Create a GitHub Release tagged `v0.2.2`, targeting the committed source. Mark it as a pre-release and use `RELEASE-NOTES.md` for its description.
+3. Create a GitHub Release tagged with the project version (for example `v0.3.0`), targeting the committed source. Mark it as a pre-release and use `RELEASE-NOTES.md` for its description.
 4. Attach `dist/Glance.zip` and `dist/Glance.zip.sha256` to that release. The asset must be named `Glance.zip` because the store entry uses that exact path.
 5. Verify anonymously that the repository JSON, icon, and ZIP URLs are accessible. Do not announce the installer URL until all three work.
 6. Test a clean installation through the custom repository with development copies disabled. Confirm the author, icon, version, configuration, gaze, expression cleanup, and unload behavior.

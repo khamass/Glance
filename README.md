@@ -4,7 +4,7 @@
 
 ![Glance icon](images/icon.png)
 
-A Dalamud plugin for Final Fantasy XIV that activates the game's `/facecamera` gaze when you zoom in and stand still. The body keeps its existing orientation.
+A Dalamud plugin for Final Fantasy XIV that activates the game's `/facecamera` gaze when you zoom in and stand still. Add a little personality with facial expressions, or keep gaze only. The body keeps its existing orientation.
 
 **Public beta:** camera tracking and expression timing are experimental. [Releases](https://github.com/khamass/Glance/releases).
 
@@ -32,6 +32,27 @@ Created by **Macki** ([khamass](https://github.com/khamass)). Source was develop
 If upgrading from the previous name, disable the old development plugin and replace its Dev Plugin Location with the new `Glance.dll` path. Glance imports the previous saved settings on first load when it has no settings file of its own.
 
 ## Behavior
+
+### Personality settings (v0.3.0)
+
+Open `/glance` and choose a mood:
+
+| Mood | Expressions |
+| --- | --- |
+| Wink (classic, default) | Wink, followed by a smile |
+| Playful | Wink, pucker up |
+| Friendly | Smile, fake smile |
+| Dramatic | Amazed, taunt |
+| Custom | Any combination of the six expressions |
+| Off | Camera gaze only; no automatic facial emotes |
+
+Pools choose randomly and avoid consecutive repeats when more than one expression is selected. An empty custom pool behaves like Off. Wink remains the default for existing settings.
+
+Set frequency from every 1 to 10 zoom-ins or distinct camera turns (default 4). The counters remain independent. Set the camera-settle wait from 0 to 5 seconds (default 2). Under **Expression durations**, adjust each selected expression's hold from 0.1 to 5 seconds. Defaults: wink 0.3s, smile 2s, fake smile 1.8s, pucker up 1.4s, amazed 2s, taunt 1.6s.
+
+Wink retains its smile transition and one bounded smile retry. Other expressions return directly to `/straightface`. Neutral cleanup gets one bounded retry. Expression sequences never overlap, discard delayed steps when the actor changes, and clear on zoom-out, pause, or unload. Off does not issue a zoom-out emote unless an existing Glance expression still needs cleanup.
+
+### Gaze and trigger behavior
 
 - Zooming out beyond the close-up exit buffer sends `/straightface motion` and cancels pending wink/smile actions, even if movement already paused gaze. A single follow-up 0.65 seconds later covers an expression command rejected during the emote lock.
 

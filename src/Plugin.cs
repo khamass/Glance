@@ -40,19 +40,14 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private int captureFrames;
     private Vector3 gazeVector;
     private readonly WinkCadence winkCadence = new();
-    private float smileRemaining;
-    private nint winkPlayer;
     private int restoreGazeFrames;
-    private float straightfaceRemaining;
-    private nint smilePlayer;
-    private float smileRetryRemaining;
     private bool winkPending;
     private float zoomStillSeconds;
     private float previousZoom = float.NaN;
     private readonly RotationCadence rotationCadence = new();
     private bool closeZoomSeen;
-    private nint neutralResetPlayer;
-    private float neutralRetryRemaining;
+    private readonly ExpressionPlayback expressions = new();
+    private readonly ExpressionPicker expressionPicker = new();
 
     public Plugin()
     {
@@ -125,8 +120,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
     private void Pause(string reason)
     {
-        FinishWink();
-        FinishSmile();
+        CancelExpression();
         winkPending = false;
         rotationCadence.ResetMotion();
         restoreGazeFrames = 0;
@@ -134,34 +128,18 @@ public sealed unsafe class Plugin : IDalamudPlugin
         captureFrames = 0; active = false; status = reason;
     }
 
-    private void FinishWink(bool resumeGaze = false)
+    private bool SendExpression(string command)
     {
-        if (winkPlayer == 0) return;
-        var player = Objects.LocalPlayer;
-        if (Client.IsLoggedIn && player != null && player.Address == winkPlayer
-            && ExecuteGameCommand("/smile motion"))
-        {
-            smilePlayer = player.Address;
-            straightfaceRemaining = 2f;
-            // Dispatch does not confirm acceptance. A facial-emote lock may
-            // reject the 0.3s attempt; retry once at the former 0.65s timing.
-            smileRetryRemaining = resumeGaze ? 0.35f : 0;
-            if (resumeGaze && ownsGaze) restoreGazeFrames = 2;
-        }
-        winkPlayer = 0;
-        smileRemaining = 0;
+        var sent = ExecuteGameCommand(command);
+        if (sent && ownsGaze) restoreGazeFrames = 2;
+        return sent;
     }
 
-    private void FinishSmile(bool resumeGaze = false)
+    private void CancelExpression(bool forceNeutral = false)
     {
-        if (smilePlayer == 0) return;
         var player = Objects.LocalPlayer;
-        if (Client.IsLoggedIn && player != null && player.Address == smilePlayer
-            && ExecuteGameCommand("/straightface motion") && resumeGaze && ownsGaze)
-            restoreGazeFrames = 2;
-        smilePlayer = 0;
-        straightfaceRemaining = 0;
-        smileRetryRemaining = 0;
+        expressions.Cancel(Client.IsLoggedIn && player != null ? player.Address : 0,
+            SendExpression, forceNeutral);
     }
 
     private void Update(IFramework framework)
@@ -186,23 +164,14 @@ public sealed unsafe class Plugin : IDalamudPlugin
         var position = player.Position;
         if (lastPlayer != player.Address)
         {
-            closeZoomSeen = false; neutralResetPlayer = 0;
-            FinishWink(); FinishSmile(); winkCadence.LeaveZoom();
+            closeZoomSeen = false; expressions.Discard(); winkCadence.LeaveZoom();
             ReleaseGaze(); lastPlayer = player.Address; lastPosition = position; idleSeconds = 0;
             Pause("Waiting for idle"); return;
-        }
-        if (neutralResetPlayer != 0)
-        {
-            neutralRetryRemaining -= Math.Max(dt, 0f);
-            if (neutralRetryRemaining <= 0)
-            {
-                if (player.Address == neutralResetPlayer) ExecuteGameCommand("/straightface motion");
-                neutralResetPlayer = 0;
-            }
         }
         // Observe the physical zoom exit even if movement already paused gaze.
         // Cancel the expression sequence before sending neutral: /smile followed
         // immediately by /straightface can hit the game's emote lock.
+        var zoomExited = false;
         var exitCameraManager = CameraManager.Instance();
         if (!config.Enabled) closeZoomSeen = false;
         else if (exitCameraManager != null && exitCameraManager->ActiveCameraIndex == 0
@@ -213,33 +182,12 @@ public sealed unsafe class Plugin : IDalamudPlugin
             else if (float.IsFinite(zoom) && zoom > config.Distance + 0.35f && closeZoomSeen)
             {
                 closeZoomSeen = false;
-                winkPlayer = 0; smilePlayer = 0; winkPending = false;
-                smileRemaining = 0; straightfaceRemaining = 0; smileRetryRemaining = 0;
-                ExecuteGameCommand("/straightface motion");
-                neutralResetPlayer = player.Address;
-                neutralRetryRemaining = 0.65f;
+                zoomExited = true;
+                winkPending = false;
+                CancelExpression(forceNeutral: Expressions.Pool(config.Personality, config.CustomExpressions) != ExpressionChoices.None);
             }
         }
-        if (smilePlayer != 0)
-        {
-            if (smileRetryRemaining > 0)
-            {
-                smileRetryRemaining -= Math.Max(dt, 0f);
-                if (smileRetryRemaining <= 0 && player.Address == smilePlayer
-                    && ExecuteGameCommand("/smile motion"))
-                {
-                    straightfaceRemaining = 2f;
-                    if (ownsGaze) restoreGazeFrames = 2;
-                }
-            }
-            straightfaceRemaining -= Math.Max(dt, 0f);
-            if (straightfaceRemaining <= 0) FinishSmile(resumeGaze: true);
-        }
-        if (winkPlayer != 0)
-        {
-            smileRemaining -= Math.Max(dt, 0f);
-            if (smileRemaining <= 0) FinishWink(resumeGaze: true);
-        }
+        if (!zoomExited) expressions.Update(dt, player.Address, SendExpression);
         // Observe zoom separately from idle/activity pauses: walking or changing
         // settings while close must not count as another zoom-in.
         var zoomManager = CameraManager.Instance();
@@ -276,7 +224,9 @@ public sealed unsafe class Plugin : IDalamudPlugin
         { Pause("Paused by camera mode"); return; }
         if (!FacingMath.InRange(distance, config.Distance, active)) { Pause("Zoom in to activate"); return; }
         var native = (NativeCharacter*)player.Address;
-        if (rotationCadence.Update(camera->DirH, camera->DirV, dt))
+        var pool = Expressions.Pool(config.Personality, config.CustomExpressions);
+        if (rotationCadence.Update(camera->DirH, camera->DirV, dt, config.ExpressionFrequency)
+            && pool != ExpressionChoices.None)
             winkPending = true;
         if (restoreGazeFrames > 0 && --restoreGazeFrames == 0 && ownsGaze
             && !native->LookAt.IsFacingCamera)
@@ -303,8 +253,6 @@ public sealed unsafe class Plugin : IDalamudPlugin
         }
         else if (ownsGaze && native->LookAt.IsFacingCamera)
         {
-            var captured = native->LookAt.CameraVector;
-            var original = new Vector3(captured.X, captured.Y, captured.Z);
             // Infer representation from the value the game actually captured.
             // Do not assume that the portrait's world-position format applies here.
             if (captureFrames > 0)
@@ -324,16 +272,17 @@ public sealed unsafe class Plugin : IDalamudPlugin
             }
         }
         active = true;
-        if (captureFrames == 0 && native->LookAt.IsFacingCamera && winkCadence.EnterZoom())
+        if (captureFrames == 0 && native->LookAt.IsFacingCamera
+            && winkCadence.EnterZoom(config.ExpressionFrequency) && pool != ExpressionChoices.None)
             winkPending = true;
-        if (winkPending && zoomStillSeconds >= 2f && rotationCadence.StillSeconds >= 2f
-            && winkPlayer == 0 && smilePlayer == 0 && native->LookAt.IsFacingCamera
-            && ExecuteGameCommand("/wink motion"))
+        if (winkPending && zoomStillSeconds >= config.ExpressionDelay
+            && rotationCadence.StillSeconds >= config.ExpressionDelay
+            && !expressions.IsBusy && native->LookAt.IsFacingCamera)
         {
             winkPending = false;
-            winkPlayer = player.Address;
-            smileRemaining = 0.3f;
-            if (ownsGaze) restoreGazeFrames = 2;
+            var selected = expressionPicker.Pick(pool, Random.Shared);
+            if (selected != null)
+                expressions.Start(selected, config.ExpressionHolds[selected.Kind], player.Address, SendExpression);
         }
         status = ownsGaze && captureFrames == 0 && gazeSource < 0 ? "Gaze held; camera vector format not recognized"
             : native->LookAt.IsFacingCamera ? "Native /facecamera gaze active"
@@ -377,7 +326,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private void Draw()
     {
         if (!open) return;
-        ImGui.SetNextWindowSize(new Vector2(420, 280), ImGuiCond.FirstUseEver);
+        ImGui.SetNextWindowSize(new Vector2(480, 380), ImGuiCond.FirstUseEver);
         if (ImGui.Begin("Glance###Glance", ref open, ImGuiWindowFlags.AlwaysAutoResize))
         {
             var iconPath = Path.Combine(Interface.AssemblyLocation.DirectoryName!, "images", "icon.png");
@@ -396,7 +345,48 @@ public sealed unsafe class Plugin : IDalamudPlugin
             changed |= ImGui.SliderFloat("Gaze responsiveness", ref config.Response, 5f, 90f, "%.0f");
             if (ImGui.Button("Use current zoom") && float.IsFinite(distance) && distance >= 1f)
             { config.Distance = Math.Clamp(distance, 1f, 10f); changed = true; }
-            if (changed) { Pause("Settings updated"); config.Sanitize(); Interface.SavePluginConfig(config); }
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.TextColored(new Vector4(0.92f, 0.78f, 0.49f, 1), "PERSONALITY");
+            var personality = (int)config.Personality;
+            if (ImGui.Combo("Mood", ref personality, "Wink (classic)\0Playful\0Friendly\0Dramatic\0Custom\0Off - gaze only\0"))
+            { config.Personality = (Personality)personality; changed = true; }
+            if (config.Personality == Personality.Custom)
+            {
+                foreach (var definition in Expressions.All)
+                {
+                    var selected = (config.CustomExpressions & definition.Choice) != 0;
+                    if (ImGui.Checkbox(definition.Name, ref selected))
+                    {
+                        config.CustomExpressions = selected ? config.CustomExpressions | definition.Choice
+                            : config.CustomExpressions & ~definition.Choice;
+                        changed = true;
+                    }
+                }
+            }
+            var pool = Expressions.Pool(config.Personality, config.CustomExpressions);
+            if (config.Personality != Personality.Off)
+            {
+                ImGui.TextWrapped(pool == ExpressionChoices.None ? "Choose at least one expression. Gaze stays enabled."
+                    : "Pool: " + string.Join(", ", Expressions.All.Where(e => (pool & e.Choice) != 0).Select(e => e.Name)));
+                changed |= ImGui.SliderInt("Every N zoom-ins / turns", ref config.ExpressionFrequency, 1, 10);
+                changed |= ImGui.SliderFloat("Wait after camera settles", ref config.ExpressionDelay, 0f, 5f, "%.1f seconds");
+                if (ImGui.CollapsingHeader("Expression durations"))
+                {
+                    foreach (var definition in Expressions.All.Where(e => (pool & e.Choice) != 0))
+                    {
+                        var hold = config.ExpressionHolds[definition.Kind];
+                        if (ImGui.SliderFloat(definition.Name + " hold", ref hold, 0.1f, 5f, "%.1f seconds"))
+                        { config.ExpressionHolds[definition.Kind] = hold; changed = true; }
+                    }
+                    ImGui.TextWrapped("Wink transitions through a smile; other expressions return directly to neutral. Game animation timing can vary.");
+                }
+            }
+            if (changed)
+            {
+                Pause("Settings updated"); winkCadence.Reset(); rotationCadence.Reset();
+                config.Sanitize(); Interface.SavePluginConfig(config);
+            }
             ImGui.Separator();
             ImGui.TextColored(active ? new Vector4(0.39f, 0.84f, 0.79f, 1)
                 : new Vector4(0.73f, 0.76f, 0.82f, 1), status);
@@ -404,15 +394,16 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 ImGui.TextUnformatted($"Camera tracking source: {gazeSource}");
             ImGui.TextUnformatted($"Last camera distance: {distance:0.00} yalms");
             ImGui.TextWrapped("Stand still and zoom in for eye contact. Only your head and eyes follow the camera. Movement and game activity pause the gaze automatically.");
-            ImGui.TextWrapped("Every fourth zoom-in or camera turn: wait 2 seconds after the camera settles, briefly wink, smile, then return to a straight face. A continuous drag counts as one turn.");
+            if (expressions.CurrentName != null) ImGui.TextUnformatted("Expression: " + expressions.CurrentName);
+            ImGui.TextWrapped("A continuous camera drag counts as one turn. Expressions return to a straight face when zooming out.");
         }
         ImGui.End();
     }
 
     public void Dispose()
     {
-        FinishWink();
-        FinishSmile();
+        CancelExpression();
+        expressions.Discard();
         ReleaseGaze();
         Framework.Update -= Update;
         Interface.UiBuilder.Draw -= Draw;

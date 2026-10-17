@@ -5,10 +5,15 @@ namespace Glance;
 [Serializable]
 public sealed class Configuration : IPluginConfiguration
 {
-    public int Version { get; set; } = 3;
+    public int Version { get; set; } = 4;
     public bool Enabled = true;
     public float Distance = 3.0f;
     public float Response = 45.0f;
+    public Personality Personality = Personality.Wink;
+    public ExpressionChoices CustomExpressions = ExpressionChoices.Wink;
+    public int ExpressionFrequency = 4;
+    public float ExpressionDelay = 2f;
+    public Dictionary<ExpressionKind, float> ExpressionHolds = new();
 
     public void Sanitize()
     {
@@ -25,6 +30,17 @@ public sealed class Configuration : IPluginConfiguration
         }
         Distance = float.IsFinite(Distance) ? Math.Clamp(Distance, 1f, 10f) : 3f;
         Response = float.IsFinite(Response) ? Math.Clamp(Response, 5f, 90f) : 45f;
+        if (!Enum.IsDefined(Personality)) Personality = Personality.Wink;
+        CustomExpressions &= ExpressionChoices.All;
+        ExpressionFrequency = Math.Clamp(ExpressionFrequency, 1, 10);
+        ExpressionDelay = float.IsFinite(ExpressionDelay) ? Math.Clamp(ExpressionDelay, 0f, 5f) : 2f;
+        ExpressionHolds ??= new();
+        foreach (var definition in Expressions.All)
+        {
+            var value = ExpressionHolds.GetValueOrDefault(definition.Kind, definition.Hold);
+            ExpressionHolds[definition.Kind] = float.IsFinite(value) ? Math.Clamp(value, 0.1f, 5f) : definition.Hold;
+        }
+        Version = 4;
     }
 }
 

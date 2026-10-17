@@ -1,6 +1,10 @@
-# Glance v0.2.3 — Public beta
+# Glance v0.3.0 — A little more personality
 
-Zooming out now immediately sends `/straightface motion` and cancels queued expression actions. This also works if movement paused gaze before you zoomed out. One follow-up after 0.65 seconds covers possible emote-lock rejection. In-game verification is still required.
+Choose Wink (classic), Playful, Friendly, Dramatic, Custom, or Off (gaze only) in `/glance`. Expression pools include wink, smile, fake smile, pucker up, amazed, and taunt. Random selection avoids consecutive repeats when possible.
+
+Adjust frequency from every 1–10 zoom-ins or distinct camera turns, the settle delay from 0–5 seconds, and each selected expression's duration from 0.1–5 seconds. Existing users keep wink, every fourth trigger, and a two-second delay by default.
+
+Wink retains its smile transition; other expressions return directly to `/straightface`. Sequences cannot overlap, clear on zoom-out, and discard old timers on actor replacement. Off avoids automatic facial commands. Build and checks cover selection, cadence, timing, overlap prevention, and cleanup. In-game verification is still required.
 
 By **Macki**. A little eye contact. A little personality.
 

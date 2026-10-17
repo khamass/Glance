@@ -16,7 +16,9 @@ public sealed class RotationCadence
         StillSeconds = 0;
     }
 
-    public bool Update(float yaw, float pitch, float dt)
+    public void Reset() { turns = 0; ResetMotion(); }
+
+    public bool Update(float yaw, float pitch, float dt, int frequency = 4)
     {
         if (!float.IsFinite(yaw) || !float.IsFinite(pitch)) { ResetMotion(); return false; }
         if (!initialized)
@@ -37,7 +39,7 @@ public sealed class RotationCadence
         var completedTurn = travel >= MathF.PI / 18f;
         travel = 0;
         if (!completedTurn) return false;
-        turns = (turns + 1) % 4;
+        turns = (turns + 1) % Math.Clamp(frequency, 1, 10);
         return turns == 0;
     }
 }

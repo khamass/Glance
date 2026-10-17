@@ -1,6 +1,8 @@
 using System.Numerics;
 using Glance;
 
+ExpressionChecks.Run();
+
 static void Check(bool ok, string message)
 {
     if (!ok) throw new Exception(message);
