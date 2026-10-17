@@ -10,6 +10,21 @@ internal static class CloseUpChecks
             Console.WriteLine("PASS " + name);
         }
         var limit = new CloseUpLimit();
+        var setting = new CameraAngleSetting();
+        var configuredAngle = CloseUpAngle.ToNative(20);
+        var savedAngle = configuredAngle;
+        var writes = 0;
+        void Write(float value) { configuredAngle = value; writes++; }
+        setting.Apply(configuredAngle, CloseUpAngle.Angle50, Write);
+        Check(configuredAngle == CloseUpAngle.Angle50, "Close-up writes the actual game configuration angle");
+        setting.Apply(configuredAngle, CloseUpAngle.Angle50, Write);
+        Check(writes == 1, "Unchanged configuration does not produce repeated writes");
+        configuredAngle = CloseUpAngle.ToNative(35);
+        setting.Apply(configuredAngle, CloseUpAngle.ToNative(70), Write);
+        setting.Restore(Write);
+        Check(configuredAngle == savedAngle, "External writes and slider changes never replace the captured original angle");
+        setting.Restore(Write);
+        Check(writes == 3, "Repeated cleanup does not write again");
         Check(MathF.Abs(CloseUpAngle.ToNative(0) + 0.08f) < 0.00001f
             && MathF.Abs(CloseUpAngle.ToNative(100) - 0.21f) < 0.00001f, "Camera angle slider maps both endpoints");
         Check(CloseUpAngle.ToNative(float.NaN) == CloseUpAngle.Angle50

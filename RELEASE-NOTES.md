@@ -1,3 +1,11 @@
+# Glance v0.4.3 — Apply the game camera angle
+
+Replaces the live TiltOffset field override with the actual UiControl TiltOffset configuration API. The prior implementation could be overwritten by the game's camera recalculation and its diagnostic could mislabel that as another plugin's interference.
+
+Inside the configured close-up range, Glance temporarily sets Character Configuration's 3rd Person Camera Angle to its selected value. The original configured angle is captured once and restored on zoom-out, disable, activity pause, camera replacement and unload. Slider edits or external angle writes during the close-up do not replace that snapshot. The game configuration can temporarily display the selected value while close. Unlike v0.4.1/0.4.2, this does temporarily change the configuration setting itself. A game crash or forced termination during the close-up may leave that temporary setting in place.
+
+The conflict diagnostic now observes the configuration setting, rather than a live camera interpolation field. Other plugins can still write later or change framing through other methods; disable their angle controls when testing. Build and automated configuration-capture/restore checks pass; in-game verification is required.
+
 # Glance v0.4.2 — Camera angle controls
 
 Under Extended close-up, choose **Override close-up camera angle**, set **Close-up camera angle** from 0–100 (default 50), and set **Angle activation distance** from 0.20–3.00 yalms (default 1.50). Activation is independent of camera limits changed by other plugins. The 0.05-yalm exit margin remains.

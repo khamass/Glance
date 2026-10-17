@@ -105,3 +105,8 @@ Build and automated camera-limit restoration checks pass; rendering and scrollin
 
 Under Extended close-up, toggle **Override close-up camera angle**, choose an angle from 0–100, and set **Angle activation distance** independently of other plugins' camera limits. Defaults are 50 and 1.50 yalms. Zooming out releases the live override without changing saved game settings. The UI shows active/waiting status and a possible-conflict message when repeated external angle changes are observed. This diagnostic cannot name a plugin or guarantee compatibility; compare with other camera plugins' angle controls disabled.
 
+
+## Camera framing fix (v0.4.3)
+
+The close-up angle now temporarily changes the game's actual Character Configuration setting through UiControl TiltOffset. Glance captures the original configured value once and restores it on zoom-out or normal cleanup. Earlier descriptions of a live-only override apply to v0.4.1/0.4.2. A crash or forced termination may leave the temporary angle set. The conflict diagnostic now observes configuration writes, not native interpolation. Other camera plugins can still interfere; compare with their angle controls disabled.
+

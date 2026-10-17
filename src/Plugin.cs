@@ -26,6 +26,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
     [PluginService] internal static ITextureProvider Textures { get; private set; } = null!;
     [PluginService] internal static IGameInteropProvider Interop { get; private set; } = null!;
+    [PluginService] internal static IGameConfig GameConfig { get; private set; } = null!;
 
     private readonly Configuration config;
     private bool open;
@@ -175,7 +176,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             && !Condition[ConditionFlag.Occupied];
         if (eligible && closeUp == null && closeUpError == null)
         {
-            try { closeUp = new ExtendedCloseUp(Interop); }
+            try { closeUp = new ExtendedCloseUp(Interop, GameConfig); }
             catch (Exception ex)
             {
                 closeUpError = "Extended close-up unavailable; see /xllog";
@@ -388,7 +389,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 {
                     changed |= ImGui.SliderFloat("Close-up camera angle", ref config.CloseUpCameraAngle, 0f, 100f, "%.0f");
                     changed |= ImGui.SliderFloat("Angle activation distance", ref config.CloseUpAngleDistance, 0.2f, 3f, "%.2f yalms");
-                    ImGui.TextWrapped("Angle applies below this distance. Zooming out restores the game camera angle. Your saved Character Configuration setting is unchanged.");
+                    ImGui.TextWrapped("Temporarily changes the game's camera angle below this distance. Zooming out restores the setting captured on entry. Disable other plugins' angle controls if they conflict.");
                     ImGui.TextUnformatted(closeUp?.AngleActive == true ? "Camera angle override: active" : "Camera angle override: waiting");
                     if (closeUp?.PossibleAngleConflict == true)
                         ImGui.TextWrapped("Camera angle keeps changing externally. Another camera plugin or game camera update may be overriding Glance. Disable its angle control, or turn off Glance's angle override.");

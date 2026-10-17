@@ -1,4 +1,5 @@
 using Dalamud.Hooking;
+using Dalamud.Game.Config;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
@@ -12,9 +13,8 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
     private readonly Hook<CameraBase.Delegates.ShouldDrawGameObject> visibility;
     private readonly CloseUpLimit limit = new();
     private readonly CloseUpAngle angle = new();
-    private readonly IGameInteropProvider interop;
-    private Hook<Camera.Delegates.UpdateTiltOffset>? tilt;
-    private float originalTilt;
+    private readonly CameraAngleSetting angleSetting = new();
+    private readonly IGameConfig gameConfig;
     private float requestedTilt = CloseUpAngle.Angle50;
     private int mismatchedFrames;
     public bool PossibleAngleConflict => mismatchedFrames >= 15;
@@ -23,9 +23,9 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
     private nint playerAddress;
     public bool Active => limit.Active;
 
-    public ExtendedCloseUp(IGameInteropProvider interop)
+    public ExtendedCloseUp(IGameInteropProvider interop, IGameConfig gameConfig)
     {
-        this.interop = interop;
+        this.gameConfig = gameConfig;
         visibility = interop.HookFromAddress<CameraBase.Delegates.ShouldDrawGameObject>(
             CameraBase.MemberFunctionPointers.ShouldDrawGameObject, ShouldDraw);
         // Enable only while a normal third-person camera is eligible.
@@ -38,7 +38,6 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
         if (cameraAddress != (nint)camera)
         {
             RestoreAngle();
-            tilt?.Dispose(); tilt = null;
             // A replaced native object is no longer safe to dereference.
             limit.Forget(); cameraAddress = 0; playerAddress = 0;
         }
@@ -50,44 +49,39 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
 
         cameraAddress = (nint)camera;
         playerAddress = player;
-        tilt ??= interop.HookFromAddress<Camera.Delegates.UpdateTiltOffset>(
-            camera->VirtualTable->UpdateTiltOffset, UpdateTilt);
         camera->MinDistance = limit.Apply(camera->MinDistance, minimum);
         // Raising the slider must also move an already closer camera back out.
         ClampDistance(camera, camera->MinDistance);
         var wasClose = angle.Active;
-        if (wasClose && MathF.Abs(camera->TiltOffset - requestedTilt) > 0.002f)
+        if (wasClose && gameConfig.TryGet(UiControlOption.TiltOffset, out float configured)
+            && MathF.Abs(configured - requestedTilt) > 0.002f)
             mismatchedFrames = Math.Min(mismatchedFrames + 1, 120);
         else mismatchedFrames = Math.Max(0, mismatchedFrames - 1);
         requestedTilt = CloseUpAngle.ToNative(angleValue);
         if (overrideAngle && angle.Update(camera->Distance, angleDistance))
         {
-            if (!wasClose) originalTilt = camera->TiltOffset;
-            if (!tilt.IsEnabled) tilt.Enable();
-            camera->TiltOffset = requestedTilt;
+            ApplyAngleSetting();
+            camera->UpdateTiltOffset();
         }
         else if (wasClose) RestoreAngle(restore: true);
         if (!visibility.IsEnabled) visibility.Enable();
     }
 
-    private bool UpdateTilt(Camera* camera)
+    private void ApplyAngleSetting()
     {
-        var result = tilt!.Original(camera);
-        if (angle.Active && (nint)camera == cameraAddress
-            && camera->ZoomMode == CameraZoomMode.ThirdPerson && !camera->IsEventCameraAutoControl)
-            camera->TiltOffset = requestedTilt;
-        return result;
+        if (gameConfig.TryGet(UiControlOption.TiltOffset, out float value))
+            angleSetting.Apply(value, requestedTilt, WriteAngleSetting);
     }
+
+    private void WriteAngleSetting(float value) => gameConfig.Set(UiControlOption.TiltOffset, value);
 
     private void RestoreAngle(bool restore = false)
     {
-        if (tilt?.IsEnabled == true) tilt.Disable();
+        angleSetting.Restore(WriteAngleSetting);
         var manager = CameraManager.Instance();
         if ((angle.Active || restore) && manager != null && (nint)manager->Camera == cameraAddress)
         {
-            // Re-read the game's saved setting, including any edits made while close.
-            // UpdateTiltOffset reads Character Configuration; Glance never writes it.
-            manager->Camera->TiltOffset = originalTilt;
+            // Recalculate framing from the restored Character Configuration value.
             manager->Camera->UpdateTiltOffset();
         }
         angle.Reset();
@@ -130,6 +124,5 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
     {
         Restore();
         visibility.Dispose();
-        tilt?.Dispose();
     }
 }

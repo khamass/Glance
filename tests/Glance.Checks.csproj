@@ -11,4 +11,5 @@
   <ItemGroup><Compile Include="..\src\Expressions.cs" Link="Expressions.cs" /></ItemGroup>
   <ItemGroup><Compile Include="..\src\CloseUpLimit.cs" Link="CloseUpLimit.cs" /></ItemGroup>
   <ItemGroup><Compile Include="..\src\CloseUpAngle.cs" Link="CloseUpAngle.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\CameraAngleSetting.cs" Link="CameraAngleSetting.cs" /></ItemGroup>
 </Project>
