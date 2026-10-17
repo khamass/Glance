@@ -3,7 +3,7 @@
     "Author": "Macki",
     "Name": "Glance",
     "InternalName": "Glance",
-    "AssemblyVersion": "0.5.1.0",
+    "AssemblyVersion": "0.5.2.0",
     "Description": "Public beta. Camera-facing gaze, configurable close-up framing, themed personality moods and a searchable catalog of unlocked in-game emotes. Customize facial expressions or opt into body animations. Configure with /glance. Timing and camera compatibility are experimental. Icon created with AI assistance.",
     "Punchline": "A little eye contact. A little personality.",
     "ApplicableVersion": "any",
@@ -15,12 +15,12 @@
     ],
     "RepoUrl": "https://github.com/khamass/Glance",
     "IconUrl": "https://raw.githubusercontent.com/khamass/Glance/main/images/icon.png",
-    "Changelog": "Adds Fine close-up zoom and a 0.01–1.00 zoom delta slider (default 0.10) under Extended close-up. Uses the selected delta inside Close-up distance and the original zoom speed outside it. Includes the v0.5.0 personality catalog expansion.",
+    "Changelog": "Smooth close-up transitions: zoom delta blends across a 0.75-yalm band instead of switching suddenly; camera angle eases in and out with configurable transition time (default 0.35 seconds). Original angle is restored after the exit blend.",
     "IsHide": false,
     "IsTestingExclusive": false,
-    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v0.5.1/Glance.zip",
-    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v0.5.1/Glance.zip",
-    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v0.5.1/Glance.zip",
-    "LastUpdate": 1792239689
+    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v0.5.2/Glance.zip",
+    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v0.5.2/Glance.zip",
+    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v0.5.2/Glance.zip",
+    "LastUpdate": 1792240387
   }
 ]
