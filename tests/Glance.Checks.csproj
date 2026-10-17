@@ -10,4 +10,5 @@
   <ItemGroup><Compile Include="..\src\RotationCadence.cs" Link="RotationCadence.cs" /></ItemGroup>
   <ItemGroup><Compile Include="..\src\Expressions.cs" Link="Expressions.cs" /></ItemGroup>
   <ItemGroup><Compile Include="..\src\CloseUpLimit.cs" Link="CloseUpLimit.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\CloseUpAngle.cs" Link="CloseUpAngle.cs" /></ItemGroup>
 </Project>

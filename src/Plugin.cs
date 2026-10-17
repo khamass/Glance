@@ -382,6 +382,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 changed |= ImGui.SliderFloat("Closest camera distance", ref config.MinimumCameraDistance, 0.1f, 1.5f, "%.2f yalms");
                 ImGui.TextWrapped("Scroll closer than the normal game limit. Smaller values allow a tighter close-up. Keeps your character visible in third person; scroll back out before switching to first person.");
                 ImGui.TextWrapped("Pauses during combat, mounts, cutscenes, group pose and other game activity. Original camera limits return when disabled.");
+                ImGui.TextWrapped("Inside the extended zoom range, 3rd Person Camera Angle temporarily becomes 50. Zooming out restores your Character Configuration angle; the saved setting is unchanged.");
                 if (closeUpError != null) ImGui.TextWrapped(closeUpError);
             }
             if (ImGui.Button("Use current zoom") && float.IsFinite(distance) && distance >= 1f)

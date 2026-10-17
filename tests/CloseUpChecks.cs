@@ -10,6 +10,16 @@ internal static class CloseUpChecks
             Console.WriteLine("PASS " + name);
         }
         var limit = new CloseUpLimit();
+        var angle = new CloseUpAngle();
+        Check(!angle.Update(2f, 1.5f), "Normal zoom keeps the user's camera angle");
+        Check(angle.Update(1.49f, 1.5f), "Crossing below the original minimum activates angle 50");
+        Check(angle.Update(1.52f, 1.5f), "Boundary jitter does not toggle the close-up angle");
+        Check(!angle.Update(1.56f, 1.5f), "Zooming out releases the angle override");
+        Check(!angle.Update(1.5f, 1.5f), "Angle override waits until inside extended range");
+        angle.Update(0.5f, 1.5f);
+        angle.Reset();
+        Check(!angle.Active && !angle.Update(float.NaN, 1.5f), "Pauses and invalid zoom release the angle override");
+        Check(MathF.Abs(CloseUpAngle.Angle50 - 0.065f) < 0.00001f, "Camera angle 50 maps to the native tilt value");
         Check(limit.Apply(1.5f, 0.5f) == 0.5f, "Extended zoom lowers the normal minimum");
         Check(limit.Apply(0.5f, 0.2f) == 0.2f, "Slider updates preserve the original limit");
         Check(limit.Restore(0.2f) == 1.5f && !limit.Active, "Disabling restores the original camera limit");

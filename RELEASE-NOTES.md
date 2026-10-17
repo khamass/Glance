@@ -1,3 +1,11 @@
+# Glance v0.4.1 — Close-up camera framing
+
+When Extended close-up is enabled and the camera moves below its original minimum distance, Glance temporarily applies **3rd Person Camera Angle 50**. Zooming out beyond that boundary restores the angle from Character Configuration. A 0.05-yalm exit margin prevents flickering at the boundary.
+
+The override uses the live camera only: Glance never changes the saved Character Configuration angle. Pausing, disabling, unloading, switching camera modes or replacing the camera also releases the override. The native camera update reads the saved setting again on release, including changes made during a close-up.
+
+Build and automated threshold checks pass; visual framing and restoration still require in-game testing.
+
 # Glance v0.4.0 — Extended close-up
 
 Enable **Extended close-up** in `/glance` to scroll closer than the normal game minimum. **Closest camera distance** sets the scroll limit from 0.10–1.50 yalms (default 0.50). The existing Close-up distance slider still controls when gaze activates.
