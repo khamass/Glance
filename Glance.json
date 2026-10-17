@@ -2,8 +2,8 @@
   "Author": "Macki",
   "Name": "Glance",
   "InternalName": "Glance",
-  "AssemblyVersion": "0.4.3.0",
-  "Description": "Public beta. Meet your character's gaze during idle close-ups. Choose Wink, Playful, Friendly, Dramatic, Expressive, Custom, or gaze-only mode in /glance. Expressive adds Joy/Pose body motions. Camera tracking and expression timing are experimental. Icon created with AI assistance.",
+  "AssemblyVersion": "0.5.1.0",
+  "Description": "Public beta. Camera-facing gaze, configurable close-up framing, themed personality moods and a searchable catalog of unlocked in-game emotes. Customize facial expressions or opt into body animations. Configure with /glance. Timing and camera compatibility are experimental. Icon created with AI assistance.",
   "Punchline": "A little eye contact. A little personality.",
   "ApplicableVersion": "any",
   "DalamudApiLevel": 15,
@@ -14,5 +14,5 @@
   ],
   "RepoUrl": "https://github.com/khamass/Glance",
   "IconUrl": "https://raw.githubusercontent.com/khamass/Glance/main/images/icon.png",
-  "Changelog": "Fix close-up framing: temporarily apply the actual Character Configuration camera angle through the game configuration API, then restore the value captured on entry. Conflict diagnostic now observes configuration changes rather than native camera interpolation."
+  "Changelog": "Adds Fine close-up zoom and a 0.01–1.00 zoom delta slider (default 0.10) under Extended close-up. Uses the selected delta inside Close-up distance and the original zoom speed outside it. Includes the v0.5.0 personality catalog expansion."
 }

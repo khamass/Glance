@@ -11,6 +11,31 @@ public static class ExpressionChecks
         Check(Expressions.Pool(Personality.Wink, ExpressionChoices.All) == ExpressionChoices.Wink, "Classic preset keeps wink default");
         Check(Expressions.Pool(Personality.Friendly, ExpressionChoices.All) == (ExpressionChoices.Smile | ExpressionChoices.FakeSmile), "Friendly preset contains smiles");
         Check((int)Personality.Custom == 4 && (int)Personality.Off == 5, "Existing mood settings retain their IDs");
+        Check((int)Personality.Expressive == 6 && (int)ExpressionKind.Pose == 7,
+            "Legacy mood, expression and flag values remain compatible");
+        Check(PersonalityThemes.Matches(Personality.Confident, "/pose", true)
+            && !PersonalityThemes.Matches(Personality.Confident, "/cry", true), "New moods constrain their themed pools");
+        Check(PersonalityThemes.Matches(Personality.FacialShuffle, "/smile", false)
+            && !PersonalityThemes.Matches(Personality.FacialShuffle, "/dance", true), "Facial shuffle excludes body animations");
+        var dynamicPool = new[] {
+            new ExpressionDefinition(ExpressionKind.GameEmote, "A", "/a motion", 8f, true, 100),
+            new ExpressionDefinition(ExpressionKind.GameEmote, "B", "/b motion", 8f, true, 101),
+        };
+        var dynamicPicker = new ExpressionPicker();
+        var dynamicRandom = new Random(12);
+        var dynamicFirst = dynamicPicker.Pick(dynamicPool, dynamicRandom)!;
+        var dynamicSecond = dynamicPicker.Pick(dynamicPool, dynamicRandom)!;
+        Check(dynamicFirst.Command != dynamicSecond.Command, "Game emotes with the same generic kind still avoid repeats");
+        Check(dynamicFirst.Choice == ExpressionChoices.None, "Game catalog IDs never collide with legacy bit flags");
+        var longPlayback = new ExpressionPlayback();
+        var longSent = new List<string>();
+        bool LongSend(string command) { longSent.Add(command); return true; }
+        longPlayback.Start(dynamicPool[0], 12f, 1, LongSend);
+        longPlayback.Update(8f, 1, LongSend);
+        Check(longSent.Count == 1 && longPlayback.IsBusy, "Body cooldowns can exceed five seconds");
+        longPlayback.Cancel(1, LongSend);
+        longPlayback.Update(1f, 1, LongSend);
+        Check(!longPlayback.IsBusy && longSent[^1] == "/straightface motion", "Long body cooldowns still cancel facial cleanup on zoom-out");
         Check(Expressions.Pool(Personality.Expressive, ExpressionChoices.All) == (ExpressionChoices.Joy | ExpressionChoices.Pose), "Expressive preset contains only joy and pose");
         Check(Expressions.Pool(Personality.Playful, ExpressionChoices.All) == (ExpressionChoices.Wink | ExpressionChoices.PuckerUp), "Playful pair remains unchanged");
         Check(Expressions.All.Single(e => e.Kind == ExpressionKind.Joy).BodyMotion

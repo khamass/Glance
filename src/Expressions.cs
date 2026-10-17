@@ -1,8 +1,8 @@
 namespace Glance;
 
 // Append new values: existing settings persist these numeric identifiers.
-public enum Personality { Wink, Playful, Friendly, Dramatic, Custom, Off, Expressive }
-public enum ExpressionKind { Wink, Smile, FakeSmile, PuckerUp, Amazed, Taunt, Joy, Pose }
+public enum Personality { Wink, Playful, Friendly, Dramatic, Custom, Off, Expressive, Shy, Confident, Cheerful, Mischievous, Thoughtful, Affectionate, Melancholic, Theatrical, Celebratory, DanceParty, FacialShuffle }
+public enum ExpressionKind { Wink, Smile, FakeSmile, PuckerUp, Amazed, Taunt, Joy, Pose, GameEmote }
 
 [Flags]
 public enum ExpressionChoices
@@ -12,9 +12,9 @@ public enum ExpressionChoices
     All = Wink | Smile | FakeSmile | PuckerUp | Amazed | Taunt | Joy | Pose,
 }
 
-public sealed record ExpressionDefinition(ExpressionKind Kind, string Name, string Command, float Hold, bool BodyMotion = false)
+public sealed record ExpressionDefinition(ExpressionKind Kind, string Name, string Command, float Hold, bool BodyMotion = false, uint EmoteId = 0)
 {
-    public ExpressionChoices Choice => (ExpressionChoices)(1 << (int)Kind);
+    public ExpressionChoices Choice => Kind == ExpressionKind.GameEmote ? ExpressionChoices.None : (ExpressionChoices)(1 << (int)Kind);
 }
 
 public static class Expressions
@@ -45,14 +45,18 @@ public static class Expressions
 
 public sealed class ExpressionPicker
 {
-    private ExpressionKind? previous;
+    private string? previous;
     public ExpressionDefinition? Pick(ExpressionChoices pool, Random random)
+        => Pick(Expressions.All.Where(e => (pool & e.Choice) != 0).ToArray(), random);
+
+    public ExpressionDefinition? Pick(IReadOnlyList<ExpressionDefinition> pool, Random random)
     {
-        var options = Expressions.All.Where(e => (pool & e.Choice) != 0).ToArray();
+        var options = pool.ToArray();
         if (options.Length == 0) return null;
-        if (options.Length > 1) options = options.Where(e => e.Kind != previous).ToArray();
+        if (options.Length > 1) options = options.Where(e => e.Command != previous).ToArray();
+        if (options.Length == 0) return null;
         var picked = options[random.Next(options.Length)];
-        previous = picked.Kind;
+        previous = picked.Command;
         return picked;
     }
 }
@@ -73,7 +77,7 @@ public sealed class ExpressionPlayback
         owner = actor;
         expressing = true;
         CurrentName = expression.Name;
-        hold = float.IsFinite(hold) ? Math.Clamp(hold, 0.1f, 5f) : expression.Hold;
+        hold = float.IsFinite(hold) ? Math.Clamp(hold, 0.1f, expression.BodyMotion ? 30f : 5f) : expression.Hold;
         if (expression.Kind == ExpressionKind.Wink)
         {
             steps.Enqueue(("/smile motion", hold));

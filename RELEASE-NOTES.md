@@ -1,3 +1,25 @@
+# Glance v0.5.1 — Fine close-up zoom
+
+Adds **Fine close-up zoom** and a **Close-up zoom delta** slider under Extended close-up. Delta ranges from 0.01 to 1.00, default 0.10. Smaller values give finer zoom steps. The override applies in both directions while within the existing Close-up distance, so zooming back out is also controlled. Outside that distance the original camera zoom-speed function is used.
+
+Fine zoom is enabled by default when Extended close-up is enabled. Turning it off, disabling Extended close-up/Glance, or entering an excluded camera/activity mode releases the zoom-speed hook. Camera replacement disposes the previous hook without dereferencing the old camera. The minimum camera distance and first-person restrictions remain independent. Other camera plugins may still interfere with zoom behavior.
+
+Includes the unpublished v0.5.0 personality expansion below. Release build and automated delta bounds, activation and fallback checks pass; actual scrolling, mouse/controller input and camera-plugin compatibility need in-game verification.
+
+# Glance v0.5.0 — Personality catalog
+
+Adds eleven mood choices: Shy, Confident, Cheerful, Mischievous, Thoughtful, Affectionate, Melancholic, Theatrical, Celebratory, Dance party and Facial shuffle. Together with the existing seven options, the mood menu now has eighteen choices. Existing Wink, Playful, Friendly, Dramatic and Expressive pools retain their original definitions and saved numeric identities.
+
+Custom now browses named performance emotes from the installed game's Emote sheet. Search by localized name or command. Only unlocked emotes are eligible; new unlocks refresh within a second, and switching characters clears the unlock cache. State controls such as /sit, /groundsit, /cpose, /facecamera and /straightface are excluded from personality performances. Themed pools resolve against real catalog commands and omit missing/locked entries. Catalog loading and in-game unlock filtering require runtime verification; compilation alone does not verify the game data.
+
+Copy an available mood to Custom, select individual emotes and adjust their holds. Existing custom flag selections remain usable alongside new selections stored by stable game row IDs. No arbitrary user command strings are executed. Motion-only commands avoid emote chat text. Random selection avoids consecutive repeats by command, including catalog emotes that share the generic expression kind.
+
+The Allow body animations toggle filters every pool. Known facial commands are classified as facial; unknown/new performance commands conservatively count as body animations. Facial shuffle uses only the known facial set. New catalog body emotes default to an eight-second cooldown and support 0.1–30 seconds. Facial holds support 0.1–5 seconds; legacy Joy/Pose retain their saved timing and five-second UI range. Wink retains its smile transition.
+
+Body motions can move or turn the character, need targets or other conditions, or loop. Hold/cooldown and /straightface only control facial cleanup: they do not guarantee that a body animation stops. Move manually to stop a looping emote. Locked emotes are never automatically selected, but unlock status cannot guarantee that an emote is usable in every context. No consecutive emote sequences overlap in Glance's scheduler; native body animation lifetimes may exceed its cooldown.
+
+Release build and automated checks pass for legacy compatibility, theme rules, generic-ID repeat avoidance, long cooldowns and cancellation. Actual emote execution, localized data, unlock refresh and body behavior still require in-game testing. Camera behavior is unchanged from v0.4.3.
+
 # Glance v0.4.3 — Apply the game camera angle
 
 Replaces the live TiltOffset field override with the actual UiControl TiltOffset configuration API. The prior implementation could be overwritten by the game's camera recalculation and its diagnostic could mislabel that as another plugin's interference.

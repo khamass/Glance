@@ -10,6 +10,16 @@ internal static class CloseUpChecks
             Console.WriteLine("PASS " + name);
         }
         var limit = new CloseUpLimit();
+        Check(CloseUpZoom.Apply(0.75f, true, 1f, 3f, 0.1f) == 0.1f,
+            "Close-up uses the selected zoom delta");
+        Check(CloseUpZoom.Apply(0.75f, true, 3.01f, 3f, 0.1f) == 0.75f
+            && CloseUpZoom.Apply(0.75f, false, 1f, 3f, 0.1f) == 0.75f,
+            "Outside close-up or disabled returns the original zoom speed");
+        Check(CloseUpZoom.Apply(0.75f, true, float.NaN, 3f, 0.1f) == 0.75f
+            && CloseUpZoom.Apply(0.75f, true, 0f, 3f, 0.1f) == 0.75f,
+            "Invalid camera distance preserves the original zoom behavior");
+        Check(CloseUpZoom.Sanitize(float.NaN) == 0.1f && CloseUpZoom.Sanitize(-2f) == 0.01f
+            && CloseUpZoom.Sanitize(5f) == 1f, "Zoom delta is bounded and finite");
         var setting = new CameraAngleSetting();
         var configuredAngle = CloseUpAngle.ToNative(20);
         var savedAngle = configuredAngle;

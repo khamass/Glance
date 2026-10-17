@@ -110,3 +110,19 @@ Under Extended close-up, toggle **Override close-up camera angle**, choose an an
 
 The close-up angle now temporarily changes the game's actual Character Configuration setting through UiControl TiltOffset. Glance captures the original configured value once and restores it on zoom-out or normal cleanup. Earlier descriptions of a live-only override apply to v0.4.1/0.4.2. A crash or forced termination may leave the temporary angle set. The conflict diagnostic now observes configuration writes, not native interpolation. Other camera plugins can still interfere; compare with their angle controls disabled.
 
+
+## Personality catalog (v0.5.0)
+
+The mood menu now offers 18 choices. New themed moods are Shy, Confident, Cheerful, Mischievous, Thoughtful, Affectionate, Melancholic, Theatrical, Celebratory, Dance party and Facial shuffle. The original pairs and saved settings stay compatible.
+
+Choose **Custom** to search performance emotes from the installed game's catalog by name or slash command. Only unlocked emotes are shown and selected. New unlocks refresh within a second. State controls (sitting, changing pose, camera gaze and neutral reset) are excluded. **Copy this mood to Custom** starts an editable selection from the current mood's available emotes. New selections use game row IDs, so they are not limited by the old eight-choice bit mask.
+
+**Allow body animations** filters all pools. Turn it off for face-focused close-ups. Known facial commands are classified as facial; other catalog commands conservatively count as body motions. **Facial shuffle** randomly picks among known unlocked facial expressions. Empty pools leave gaze active without sending an emote.
+
+New catalog body animations default to an eight-second cooldown, configurable up to 30 seconds; facial holds go up to five seconds. Existing Joy/Pose timings are preserved. Some body emotes loop, turn/move the character, or require targets and other conditions. Holds and /straightface reset the face only; move manually to stop looping motions. Commands use motion-only output and never bypass unlocks. Unlock status does not guarantee usability in every game context.
+
+Game-data loading, localized commands, unlock refresh and actual animations need in-game testing. The catalog is loaded from game data instead of a hard-coded count, so the available count depends on the installed game and character unlocks.
+
+## Fine close-up zoom (v0.5.1)
+
+Under **Extended close-up**, enable **Fine close-up zoom** and adjust **Close-up zoom delta** (0.01–1.00, default 0.10). Smaller values give finer zoom steps. It applies in both directions within **Close-up distance**, independently of the angle activation distance. Outside that range, or when the feature is disabled/paused, the original camera zoom speed is used. Closest camera distance still sets the final zoom limit. Other camera plugins can affect the result; scrolling and input-device behavior require in-game testing.

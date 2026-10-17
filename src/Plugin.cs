@@ -27,6 +27,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
     [PluginService] internal static ITextureProvider Textures { get; private set; } = null!;
     [PluginService] internal static IGameInteropProvider Interop { get; private set; } = null!;
     [PluginService] internal static IGameConfig GameConfig { get; private set; } = null!;
+    [PluginService] internal static IDataManager Data { get; private set; } = null!;
+    [PluginService] internal static IUnlockState Unlocks { get; private set; } = null!;
 
     private readonly Configuration config;
     private bool open;
@@ -52,9 +54,12 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private readonly ExpressionPicker expressionPicker = new();
     private ExtendedCloseUp? closeUp;
     private string? closeUpError;
+    private readonly EmoteCatalog catalog;
+    private string emoteSearch = "";
 
     public Plugin()
     {
+        catalog = new EmoteCatalog(Data, Unlocks);
         config = LoadConfiguration();
         config.Sanitize();
         Interface.SavePluginConfig(config);
@@ -184,7 +189,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
             }
         }
         closeUp?.Update(eligible, player?.Address ?? 0, config.MinimumCameraDistance,
-            config.OverrideCloseUpAngle, config.CloseUpCameraAngle, config.CloseUpAngleDistance);
+            config.OverrideCloseUpAngle, config.CloseUpCameraAngle, config.CloseUpAngleDistance,
+            config.FineCloseUpZoom, config.Distance, config.CloseUpZoomDelta);
     }
 
     private void Tick(float dt)
@@ -192,16 +198,19 @@ public sealed unsafe class Plugin : IDalamudPlugin
         var player = Objects.LocalPlayer;
         if (player == null || !Client.IsLoggedIn)
         {
+            catalog.Invalidate();
             winkCadence.LeaveZoom();
             Pause("Waiting for player"); lastPlayer = 0; idleSeconds = 0; return;
         }
         var position = player.Position;
         if (lastPlayer != player.Address)
         {
+            catalog.Invalidate();
             closeZoomSeen = false; expressions.Discard(); winkCadence.LeaveZoom();
             ReleaseGaze(); lastPlayer = player.Address; lastPosition = position; idleSeconds = 0;
             Pause("Waiting for idle"); return;
         }
+        catalog.Load();
         // Observe the physical zoom exit even if movement already paused gaze.
         // Cancel the expression sequence before sending neutral: /smile followed
         // immediately by /straightface can hit the game's emote lock.
@@ -218,7 +227,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 closeZoomSeen = false;
                 zoomExited = true;
                 winkPending = false;
-                CancelExpression(forceNeutral: Expressions.Pool(config.Personality, config.CustomExpressions) != ExpressionChoices.None);
+                CancelExpression(forceNeutral: catalog.Pool(config).Count > 0);
             }
         }
         if (!zoomExited) expressions.Update(dt, player.Address, SendExpression);
@@ -258,9 +267,9 @@ public sealed unsafe class Plugin : IDalamudPlugin
         { Pause("Paused by camera mode"); return; }
         if (!FacingMath.InRange(distance, config.Distance, active)) { Pause("Zoom in to activate"); return; }
         var native = (NativeCharacter*)player.Address;
-        var pool = Expressions.Pool(config.Personality, config.CustomExpressions);
+        var pool = catalog.Pool(config);
         if (rotationCadence.Update(camera->DirH, camera->DirV, dt, config.ExpressionFrequency)
-            && pool != ExpressionChoices.None)
+            && pool.Count > 0)
             winkPending = true;
         if (restoreGazeFrames > 0 && --restoreGazeFrames == 0 && ownsGaze
             && !native->LookAt.IsFacingCamera)
@@ -307,7 +316,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
         }
         active = true;
         if (captureFrames == 0 && native->LookAt.IsFacingCamera
-            && winkCadence.EnterZoom(config.ExpressionFrequency) && pool != ExpressionChoices.None)
+            && winkCadence.EnterZoom(config.ExpressionFrequency) && pool.Count > 0)
             winkPending = true;
         if (winkPending && zoomStillSeconds >= config.ExpressionDelay
             && rotationCadence.StillSeconds >= config.ExpressionDelay
@@ -316,7 +325,9 @@ public sealed unsafe class Plugin : IDalamudPlugin
             winkPending = false;
             var selected = expressionPicker.Pick(pool, Random.Shared);
             if (selected != null)
-                expressions.Start(selected, config.ExpressionHolds[selected.Kind], player.Address, SendExpression);
+                expressions.Start(selected, selected.Kind == ExpressionKind.GameEmote
+                    ? config.EmoteHolds.GetValueOrDefault(selected.EmoteId, selected.Hold)
+                    : config.ExpressionHolds[selected.Kind], player.Address, SendExpression);
         }
         status = ownsGaze && captureFrames == 0 && gazeSource < 0 ? "Gaze held; camera vector format not recognized"
             : native->LookAt.IsFacingCamera ? "Native /facecamera gaze active"
@@ -382,6 +393,12 @@ public sealed unsafe class Plugin : IDalamudPlugin
             if (config.ExtendedCloseUp)
             {
                 changed |= ImGui.SliderFloat("Closest camera distance", ref config.MinimumCameraDistance, 0.1f, 1.5f, "%.2f yalms");
+                changed |= ImGui.Checkbox("Fine close-up zoom", ref config.FineCloseUpZoom);
+                if (config.FineCloseUpZoom)
+                {
+                    changed |= ImGui.SliderFloat("Close-up zoom delta", ref config.CloseUpZoomDelta, 0.01f, 1f, "%.2f");
+                    ImGui.TextWrapped("Smaller delta gives finer zoom steps. Applies in both scroll directions inside Close-up distance; outside that range the original zoom speed is used.");
+                }
                 ImGui.TextWrapped("Scroll closer than the normal game limit. Smaller values allow a tighter close-up. Keeps your character visible in third person; scroll back out before switching to first person.");
                 ImGui.TextWrapped("Pauses during combat, mounts, cutscenes, group pose and other game activity. Original camera limits return when disabled.");
                 changed |= ImGui.Checkbox("Override close-up camera angle", ref config.OverrideCloseUpAngle);
@@ -403,37 +420,68 @@ public sealed unsafe class Plugin : IDalamudPlugin
             ImGui.Separator();
             ImGui.TextColored(new Vector4(0.92f, 0.78f, 0.49f, 1), "PERSONALITY");
             var personality = (int)config.Personality;
-            if (ImGui.Combo("Mood", ref personality, "Wink (classic)\0Playful\0Friendly\0Dramatic\0Custom\0Off - gaze only\0Expressive (joy / pose)\0"))
+            if (ImGui.Combo("Mood", ref personality, "Wink (classic)\0Playful\0Friendly\0Dramatic\0Custom\0Off - gaze only\0Expressive (joy / pose)\0Shy\0Confident\0Cheerful\0Mischievous\0Thoughtful\0Affectionate\0Melancholic\0Theatrical\0Celebratory\0Dance party\0Facial shuffle\0"))
             { config.Personality = (Personality)personality; changed = true; }
+            changed |= ImGui.Checkbox("Allow body animations", ref config.AllowBodyMotions);
             if (config.Personality == Personality.Custom)
             {
-                foreach (var definition in Expressions.All)
+                ImGui.InputText("Search emotes", ref emoteSearch, 120);
+                ImGui.TextWrapped("Shows unlocked emotes from your installed game. Body animations may move, turn, or loop; facial cleanup does not stop their motion.");
+                if (ImGui.Button("Clear custom selection"))
+                { config.CustomEmoteIds.Clear(); config.CustomExpressions = ExpressionChoices.None; changed = true; }
+                if (ImGui.BeginChild("Emote catalog", new Vector2(450, 230), true))
                 {
-                    var selected = (config.CustomExpressions & definition.Choice) != 0;
-                    if (ImGui.Checkbox(definition.Name, ref selected))
+                    foreach (var definition in (Client.IsLoggedIn ? catalog.Available(config.AllowBodyMotions) : []).Where(e =>
+                        e.Name.Contains(emoteSearch, StringComparison.CurrentCultureIgnoreCase)
+                        || e.Command.Contains(emoteSearch, StringComparison.OrdinalIgnoreCase)))
                     {
-                        config.CustomExpressions = selected ? config.CustomExpressions | definition.Choice
-                            : config.CustomExpressions & ~definition.Choice;
-                        changed = true;
+                        var selected = config.CustomEmoteIds.Contains(definition.EmoteId)
+                            || (config.CustomExpressions & definition.Choice) != 0;
+                        if (ImGui.Checkbox($"{definition.Name} ({(definition.BodyMotion ? "body" : "face")})##{definition.EmoteId}", ref selected))
+                        {
+                            if (selected) config.CustomEmoteIds.Add(definition.EmoteId);
+                            else
+                            {
+                                config.CustomEmoteIds.Remove(definition.EmoteId);
+                                config.CustomExpressions &= ~definition.Choice;
+                            }
+                            changed = true;
+                        }
                     }
                 }
+                ImGui.EndChild();
             }
-            var pool = Expressions.Pool(config.Personality, config.CustomExpressions);
-            if ((pool & (ExpressionChoices.Joy | ExpressionChoices.Pose)) != 0)
-                ImGui.TextWrapped("Joy and Pose include body motions. Hold controls facial cleanup timing; body animations finish naturally, including after zoom-out.");
+            var pool = Client.IsLoggedIn ? catalog.Pool(config) : [];
+            if (config.Personality != Personality.Custom && config.Personality != Personality.Off
+                && pool.Count > 0 && ImGui.Button("Copy this mood to Custom"))
+            {
+                config.CustomEmoteIds = pool.Select(e => e.EmoteId).ToHashSet();
+                config.CustomExpressions = ExpressionChoices.None;
+                config.Personality = Personality.Custom;
+                changed = true;
+            }
+            if (pool.Any(e => e.BodyMotion))
+                ImGui.TextWrapped("This mood includes body animations. They may move or turn the character, and some loop. Holds control facial cleanup only. Stop looping emotes manually by moving.");
             if (config.Personality != Personality.Off)
             {
-                ImGui.TextWrapped(pool == ExpressionChoices.None ? "Choose at least one expression. Gaze stays enabled."
-                    : "Pool: " + string.Join(", ", Expressions.All.Where(e => (pool & e.Choice) != 0).Select(e => e.Name)));
+                ImGui.TextWrapped(pool.Count == 0 ? "No eligible unlocked emotes. Choose Custom, allow body animations, or use another mood. Gaze stays enabled."
+                    : $"{pool.Count} available: " + string.Join(", ", pool.Take(12).Select(e => e.Name)) + (pool.Count > 12 ? "…" : ""));
                 changed |= ImGui.SliderInt("Every N zoom-ins / turns", ref config.ExpressionFrequency, 1, 10);
                 changed |= ImGui.SliderFloat("Wait after camera settles", ref config.ExpressionDelay, 0f, 5f, "%.1f seconds");
                 if (ImGui.CollapsingHeader("Expression durations"))
                 {
-                    foreach (var definition in Expressions.All.Where(e => (pool & e.Choice) != 0))
+                    foreach (var definition in pool)
                     {
-                        var hold = config.ExpressionHolds[definition.Kind];
-                        if (ImGui.SliderFloat(definition.Name + " hold", ref hold, 0.1f, 5f, "%.1f seconds"))
-                        { config.ExpressionHolds[definition.Kind] = hold; changed = true; }
+                        var hold = definition.Kind == ExpressionKind.GameEmote
+                            ? config.EmoteHolds.GetValueOrDefault(definition.EmoteId, definition.Hold)
+                            : config.ExpressionHolds[definition.Kind];
+                        var maxHold = definition.Kind == ExpressionKind.GameEmote && definition.BodyMotion ? 30f : 5f;
+                        if (ImGui.SliderFloat(definition.Name + " hold##" + definition.EmoteId, ref hold, 0.1f, maxHold, "%.1f seconds"))
+                        {
+                            if (definition.Kind == ExpressionKind.GameEmote) config.EmoteHolds[definition.EmoteId] = hold;
+                            else config.ExpressionHolds[definition.Kind] = hold;
+                            changed = true;
+                        }
                     }
                     ImGui.TextWrapped("Wink transitions through a smile; other expressions return directly to neutral. Game animation timing can vary.");
                 }
