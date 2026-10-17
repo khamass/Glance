@@ -3,7 +3,7 @@
     "Author": "Macki",
     "Name": "Glance",
     "InternalName": "Glance",
-    "AssemblyVersion": "0.4.2.0",
+    "AssemblyVersion": "0.4.3.0",
     "Description": "Public beta. Meet your character's gaze during idle close-ups. Choose Wink, Playful, Friendly, Dramatic, Expressive, Custom, or gaze-only mode in /glance. Expressive adds Joy/Pose body motions. Camera tracking and expression timing are experimental. Icon created with AI assistance.",
     "Punchline": "A little eye contact. A little personality.",
     "ApplicableVersion": "any",
@@ -15,12 +15,12 @@
     ],
     "RepoUrl": "https://github.com/khamass/Glance",
     "IconUrl": "https://raw.githubusercontent.com/khamass/Glance/main/images/icon.png",
-    "Changelog": "Close-up camera angle is configurable from 0–100, with an independent activation distance and an override toggle. Added live override status and a possible external angle-change diagnostic. Saved game settings remain unchanged.",
+    "Changelog": "Fix close-up framing: temporarily apply the actual Character Configuration camera angle through the game configuration API, then restore the value captured on entry. Conflict diagnostic now observes configuration changes rather than native camera interpolation.",
     "IsHide": false,
     "IsTestingExclusive": false,
-    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v0.4.2/Glance.zip",
-    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v0.4.2/Glance.zip",
-    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v0.4.2/Glance.zip",
-    "LastUpdate": 1792238597
+    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v0.4.3/Glance.zip",
+    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v0.4.3/Glance.zip",
+    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v0.4.3/Glance.zip",
+    "LastUpdate": 1792239138
   }
 ]
