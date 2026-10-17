@@ -1,3 +1,9 @@
+# Glance v0.4.2 — Camera angle controls
+
+Under Extended close-up, choose **Override close-up camera angle**, set **Close-up camera angle** from 0–100 (default 50), and set **Angle activation distance** from 0.20–3.00 yalms (default 1.50). Activation is independent of camera limits changed by other plugins. The 0.05-yalm exit margin remains.
+
+The UI shows whether the angle override is active. Repeated unexpected changes to the live angle produce a possible-conflict message; this is a heuristic and cannot identify a particular plugin. Disable another plugin's angle adjustment or Glance's angle override to compare. Other camera plugins may still affect framing or run after Glance. The saved game setting is unchanged and normal camera updates resume on exit.
+
 # Glance v0.4.1 — Close-up camera framing
 
 When Extended close-up is enabled and the camera moves below its original minimum distance, Glance temporarily applies **3rd Person Camera Angle 50**. Zooming out beyond that boundary restores the angle from Character Configuration. A 0.05-yalm exit margin prevents flickering at the boundary.

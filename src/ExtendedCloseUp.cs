@@ -15,6 +15,10 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
     private readonly IGameInteropProvider interop;
     private Hook<Camera.Delegates.UpdateTiltOffset>? tilt;
     private float originalTilt;
+    private float requestedTilt = CloseUpAngle.Angle50;
+    private int mismatchedFrames;
+    public bool PossibleAngleConflict => mismatchedFrames >= 15;
+    public bool AngleActive => angle.Active;
     private nint cameraAddress;
     private nint playerAddress;
     public bool Active => limit.Active;
@@ -27,7 +31,7 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
         // Enable only while a normal third-person camera is eligible.
     }
 
-    public void Update(bool eligible, nint player, float minimum)
+    public void Update(bool eligible, nint player, float minimum, bool overrideAngle, float angleValue, float angleDistance)
     {
         var manager = CameraManager.Instance();
         var camera = manager == null ? null : manager->Camera;
@@ -52,11 +56,15 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
         // Raising the slider must also move an already closer camera back out.
         ClampDistance(camera, camera->MinDistance);
         var wasClose = angle.Active;
-        if (angle.Update(camera->Distance, limit.Original!.Value))
+        if (wasClose && MathF.Abs(camera->TiltOffset - requestedTilt) > 0.002f)
+            mismatchedFrames = Math.Min(mismatchedFrames + 1, 120);
+        else mismatchedFrames = Math.Max(0, mismatchedFrames - 1);
+        requestedTilt = CloseUpAngle.ToNative(angleValue);
+        if (overrideAngle && angle.Update(camera->Distance, angleDistance))
         {
             if (!wasClose) originalTilt = camera->TiltOffset;
             if (!tilt.IsEnabled) tilt.Enable();
-            camera->TiltOffset = CloseUpAngle.Angle50;
+            camera->TiltOffset = requestedTilt;
         }
         else if (wasClose) RestoreAngle(restore: true);
         if (!visibility.IsEnabled) visibility.Enable();
@@ -67,7 +75,7 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
         var result = tilt!.Original(camera);
         if (angle.Active && (nint)camera == cameraAddress
             && camera->ZoomMode == CameraZoomMode.ThirdPerson && !camera->IsEventCameraAutoControl)
-            camera->TiltOffset = CloseUpAngle.Angle50;
+            camera->TiltOffset = requestedTilt;
         return result;
     }
 
@@ -83,6 +91,7 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
             manager->Camera->UpdateTiltOffset();
         }
         angle.Reset();
+        mismatchedFrames = 0;
     }
 
     private bool ShouldDraw(CameraBase* camera, GameObject* actor, NativeVector* position, NativeVector* lookAt)

@@ -3,7 +3,8 @@ namespace Glance;
 internal sealed class CloseUpAngle
 {
     // Character Configuration's 0–100 slider maps to -0.08–0.21.
-    public const float Angle50 = -0.08f + 0.5f * (0.21f - -0.08f);
+    public static float ToNative(float value) => -0.08f + Math.Clamp(float.IsFinite(value) ? value : 50f, 0f, 100f) / 100f * 0.29f;
+    public static float Angle50 => ToNative(50f);
     public bool Active { get; private set; }
 
     public bool Update(float distance, float normalMinimum)

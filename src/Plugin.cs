@@ -182,7 +182,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 Log.Error(ex, "Could not initialize close-up visibility hook; camera limits unchanged.");
             }
         }
-        closeUp?.Update(eligible, player?.Address ?? 0, config.MinimumCameraDistance);
+        closeUp?.Update(eligible, player?.Address ?? 0, config.MinimumCameraDistance,
+            config.OverrideCloseUpAngle, config.CloseUpCameraAngle, config.CloseUpAngleDistance);
     }
 
     private void Tick(float dt)
@@ -382,7 +383,17 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 changed |= ImGui.SliderFloat("Closest camera distance", ref config.MinimumCameraDistance, 0.1f, 1.5f, "%.2f yalms");
                 ImGui.TextWrapped("Scroll closer than the normal game limit. Smaller values allow a tighter close-up. Keeps your character visible in third person; scroll back out before switching to first person.");
                 ImGui.TextWrapped("Pauses during combat, mounts, cutscenes, group pose and other game activity. Original camera limits return when disabled.");
-                ImGui.TextWrapped("Inside the extended zoom range, 3rd Person Camera Angle temporarily becomes 50. Zooming out restores your Character Configuration angle; the saved setting is unchanged.");
+                changed |= ImGui.Checkbox("Override close-up camera angle", ref config.OverrideCloseUpAngle);
+                if (config.OverrideCloseUpAngle)
+                {
+                    changed |= ImGui.SliderFloat("Close-up camera angle", ref config.CloseUpCameraAngle, 0f, 100f, "%.0f");
+                    changed |= ImGui.SliderFloat("Angle activation distance", ref config.CloseUpAngleDistance, 0.2f, 3f, "%.2f yalms");
+                    ImGui.TextWrapped("Angle applies below this distance. Zooming out restores the game camera angle. Your saved Character Configuration setting is unchanged.");
+                    ImGui.TextUnformatted(closeUp?.AngleActive == true ? "Camera angle override: active" : "Camera angle override: waiting");
+                    if (closeUp?.PossibleAngleConflict == true)
+                        ImGui.TextWrapped("Camera angle keeps changing externally. Another camera plugin or game camera update may be overriding Glance. Disable its angle control, or turn off Glance's angle override.");
+                }
+                ImGui.TextWrapped("The activation distance is independent of camera limits modified by other plugins. If framing changes unexpectedly, compare with other camera plugins disabled.");
                 if (closeUpError != null) ImGui.TextWrapped(closeUpError);
             }
             if (ImGui.Button("Use current zoom") && float.IsFinite(distance) && distance >= 1f)

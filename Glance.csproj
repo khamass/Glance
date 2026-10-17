@@ -4,7 +4,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>0.4.1</Version>
+    <Version>0.4.2</Version>
     <Authors>Macki</Authors>
     <Product>Glance</Product>
     <RepositoryUrl>https://github.com/khamass/Glance</RepositoryUrl>

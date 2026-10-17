@@ -10,6 +10,11 @@ internal static class CloseUpChecks
             Console.WriteLine("PASS " + name);
         }
         var limit = new CloseUpLimit();
+        Check(MathF.Abs(CloseUpAngle.ToNative(0) + 0.08f) < 0.00001f
+            && MathF.Abs(CloseUpAngle.ToNative(100) - 0.21f) < 0.00001f, "Camera angle slider maps both endpoints");
+        Check(CloseUpAngle.ToNative(float.NaN) == CloseUpAngle.Angle50
+            && CloseUpAngle.ToNative(-50) == CloseUpAngle.ToNative(0)
+            && CloseUpAngle.ToNative(150) == CloseUpAngle.ToNative(100), "Camera angle clamps invalid inputs");
         var angle = new CloseUpAngle();
         Check(!angle.Update(2f, 1.5f), "Normal zoom keeps the user's camera angle");
         Check(angle.Update(1.49f, 1.5f), "Crossing below the original minimum activates angle 50");

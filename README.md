@@ -100,3 +100,8 @@ The option is off by default and restores the previous camera minimum when disab
 
 Build and automated camera-limit restoration checks pass; rendering and scrolling need in-game testing. Extended camera bounds are for the custom-repository beta and are excluded by the [official Dalamud publishing restrictions](https://dalamud.dev/plugin-publishing/restrictions/).
 
+
+## Camera angle controls (v0.4.2)
+
+Under Extended close-up, toggle **Override close-up camera angle**, choose an angle from 0–100, and set **Angle activation distance** independently of other plugins' camera limits. Defaults are 50 and 1.50 yalms. Zooming out releases the live override without changing saved game settings. The UI shows active/waiting status and a possible-conflict message when repeated external angle changes are observed. This diagnostic cannot name a plugin or guarantee compatibility; compare with other camera plugins' angle controls disabled.
+
