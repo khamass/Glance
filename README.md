@@ -6,6 +6,8 @@
 
 Glance brings your character's head and eyes toward the camera when you zoom in and stand still. Add an occasional wink, choose a personality mood, or build your own selection of unlocked emotes.
 
+![Glance in action: zooming in, camera orbit and character expressions](images/glance-demo.gif)
+
 [Get Glance](https://github.com/khamass/Glance/releases/latest) · [Report a bug](https://github.com/khamass/Glance/issues/new/choose) · [Release notes](RELEASE-NOTES.md)
 
 ## Your close-up, your character
@@ -93,3 +95,4 @@ For a different library location, pass `-p:DalamudLibPath=C:\path\to\dev` when b
 ## Credits
 
 Created by **Macki** ([khamass](https://github.com/khamass)). Source was developed with substantial AI assistance, with human design direction and in-game feedback. The icon was generated with AI assistance. [MIT License](LICENSE).
+
