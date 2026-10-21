@@ -3,8 +3,8 @@
     "Author": "Macki",
     "Name": "Glance",
     "InternalName": "Glance",
-    "AssemblyVersion": "0.5.2.0",
-    "Description": "Public beta. Camera-facing gaze, configurable close-up framing, themed personality moods and a searchable catalog of unlocked in-game emotes. Customize facial expressions or opt into body animations. Configure with /glance. Timing and camera compatibility are experimental. Icon created with AI assistance.",
+    "AssemblyVersion": "1.0.0.0",
+    "Description": "Camera-facing gaze, configurable close-up framing, themed personality moods and a searchable catalog of unlocked in-game emotes. Customize facial expressions or opt into body animations. Configure with /glance. Icon created with AI assistance.",
     "Punchline": "A little eye contact. A little personality.",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 15,
@@ -15,12 +15,12 @@
     ],
     "RepoUrl": "https://github.com/khamass/Glance",
     "IconUrl": "https://raw.githubusercontent.com/khamass/Glance/main/images/icon.png",
-    "Changelog": "Smooth close-up transitions: zoom delta blends across a 0.75-yalm band instead of switching suddenly; camera angle eases in and out with configurable transition time (default 0.35 seconds). Original angle is restored after the exit blend.",
+    "Changelog": "First stable release. Includes camera-facing gaze, smooth extended close-ups, fine zoom delta controls, camera-angle controls, 18 mood choices and a searchable unlocked emote catalog. Existing settings are preserved.",
     "IsHide": false,
     "IsTestingExclusive": false,
-    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v0.5.2/Glance.zip",
-    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v0.5.2/Glance.zip",
-    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v0.5.2/Glance.zip",
-    "LastUpdate": 1792240387
+    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v1.0.0/Glance.zip",
+    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v1.0.0/Glance.zip",
+    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v1.0.0/Glance.zip",
+    "LastUpdate": 1792596933
   }
 ]
