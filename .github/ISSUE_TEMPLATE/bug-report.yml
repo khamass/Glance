@@ -1,0 +1,46 @@
+name: Bug report
+description: Report a reproducible Glance problem.
+title: "[Bug] "
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Glance version
+      placeholder: "e.g. 1.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected feature
+      options:
+        - Gaze or camera tracking
+        - Zoom or camera angle
+        - Expressions or body animations
+        - Installation or updating
+        - Settings or other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include relevant settings, zoom distances, mood/emote and what you were doing.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Game and plugin environment
+      description: Game language, Dalamud version, input device, and relevant camera/emote plugins. If tested with other camera controls disabled, describe the result.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots, clips or relevant log excerpt
+      description: Optional. Attach a short example or relevant /xllog error. Remove personal details and tokens before sharing logs.

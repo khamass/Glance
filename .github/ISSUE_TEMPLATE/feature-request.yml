@@ -1,0 +1,17 @@
+name: Feature request
+description: Suggest a Glance improvement.
+title: "[Feature] "
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: What character moment or workflow would this improve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Explain the trigger, result and any configuration you would want.
+    validations:
+      required: true
