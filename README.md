@@ -6,7 +6,7 @@
 
 A Dalamud plugin for Final Fantasy XIV that activates the game's `/facecamera` gaze when you zoom in and stand still. Add facial expressions, opt into Joy/Pose body motions, or keep gaze only. Gaze tracking itself does not rotate the body.
 
-**Public beta:** camera tracking and expression timing are experimental. [Releases](https://github.com/khamass/Glance/releases).
+**Stable release: v1.0.0.** [Download the latest release](https://github.com/khamass/Glance/releases/latest).
 
 ## Repository installation
 
@@ -98,7 +98,7 @@ In `/glance`, enable **Extended close-up**, then scroll in. **Closest camera dis
 
 The option is off by default and restores the previous camera minimum when disabled or unloaded. It also pauses during combat, PvP, mounts, casting, cutscenes, transitions, group pose and occupied activity. First person remains a separate mode: scroll back out before changing perspective. Very small distances may put the camera inside the face; increase the slider if geometry clips. Inside the extended zoom range, Glance temporarily uses 3rd Person Camera Angle 50 and restores your Character Configuration angle when zooming out (with a 0.05-yalm exit margin). This is a live camera override; the saved game setting is unchanged. Maximum zoom-out distance stays unchanged.
 
-Build and automated camera-limit restoration checks pass; rendering and scrolling need in-game testing. Extended camera bounds are for the custom-repository beta and are excluded by the [official Dalamud publishing restrictions](https://dalamud.dev/plugin-publishing/restrictions/).
+Build and automated camera-limit restoration checks pass; rendering and scrolling need in-game testing. Extended camera bounds are for the custom-repository release and are excluded by the [official Dalamud publishing restrictions](https://dalamud.dev/plugin-publishing/restrictions/).
 
 
 ## Camera angle controls (v0.4.2)

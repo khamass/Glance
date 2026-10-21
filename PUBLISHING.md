@@ -8,16 +8,16 @@ Run `./scripts/New-Release.ps1` in PowerShell with .NET 10 and Dalamud developme
 
 The ZIP allowlist is exactly `Glance.dll`, `Glance.json`, `images/icon.png`, and `LICENSE`. No game libraries, Dalamud libraries, user settings, or obsolete builds are included.
 
-## Publish the beta
+## Publish a release
 
 1. Create the public repository `khamass/Glance` with default branch `main`.
 2. Commit source, tests, scripts, README, LICENSE, release notes, publishing instructions, manifest, generated `repo.json`, and `images/`. Exclude `bin/`, `obj/`, `.dotnet/`, and `dist/` using `.gitignore`.
-3. Create a GitHub Release tagged with the project version (for example `v0.3.0`), targeting the committed source. Mark it as a pre-release and use `RELEASE-NOTES.md` for its description.
+3. Create a GitHub Release tagged with the project version (for example `v1.0.0`), targeting the committed source. Use a normal release for stable versions and mark it as the latest release. Reserve the pre-release label for future test builds. Use `RELEASE-NOTES.md` for its description.
 4. Attach `dist/Glance.zip` and `dist/Glance.zip.sha256` to that release. The asset must be named `Glance.zip` because the store entry uses that exact path.
 5. Verify anonymously that the repository JSON, icon, and ZIP URLs are accessible. Do not announce the installer URL until all three work.
 6. Test a clean installation through the custom repository with development copies disabled. Confirm the author, icon, version, configuration, gaze, expression cleanup, and unload behavior.
 
-GitHub pre-release status labels this beta on GitHub; the custom repository itself distributes it normally, without an additional Dalamud testing toggle.
+Stable releases are published without the GitHub pre-release label. The custom repository distributes the version referenced by repo.json.
 
 Repository URL to share after publication:
 
@@ -29,6 +29,10 @@ Increment the project version and manifest assembly version together, regenerate
 
 ## Before an official submission
 
-This beta packaging does not constitute approval by Dalamud. Address the experimental native camera representation matching and expression acceptance behavior, migrate settings to the Dalamud Windowing API, adopt the supported SDK/packager with dependency locking, and perform the in-game acceptance checks in README. Follow the current official submission rules and AI disclosure policy. Official-submission descriptions and AI disclosures must be written by the human author.
+This custom-repository packaging does not constitute approval by Dalamud. Address the experimental native camera representation matching and expression acceptance behavior, migrate settings to the Dalamud Windowing API, adopt the supported SDK/packager with dependency locking, and perform the in-game acceptance checks in README. Follow the current official submission rules and AI disclosure policy. Official-submission descriptions and AI disclosures must be written by the human author.
 
 References: [custom repositories](https://dalamud.dev/plugin-publishing/custom-repositories/), [official submissions](https://github.com/goatcorp/DalamudPluginsD17), [AI policy](https://dalamud.dev/plugin-publishing/ai-policy/).
+
+## Protected main branch
+
+The active Protect main ruleset requires pull requests with zero mandatory approvals, and blocks force pushes and deletion. Create a release branch, submit and merge a pull request before tagging the source. After uploading and verifying release assets, update repo.json through a second pull request. Do not bypass branch protections for releases.

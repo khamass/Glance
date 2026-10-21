@@ -1,3 +1,11 @@
+# Glance v1.0.0 — First stable release
+
+By Macki. Glance graduates from beta with the existing v0.5.2 feature set: camera-facing gaze, smooth extended close-ups, configurable camera angle and fine zoom delta, eighteen mood choices and a searchable catalog of unlocked emotes. Existing settings are preserved. This release updates versioning and release metadata without changing gameplay behavior.
+
+Install or update through the custom repository. This is not an official Dalamud repository listing. Body animations may loop or require targets, and other camera plugins can interfere; facial cleanup does not stop every body motion. A game crash during a close-up may leave the temporary camera angle in place. These existing limitations remain applicable to the stable release.
+
+Release build and automated checks pass. Stable status reflects the maintainer's release decision; it does not imply new in-game verification in this packaging run.
+
 # Glance v0.5.2 — Smooth close-up transitions
 
 Fine zoom now blends the original zoom speed into the selected delta across the 0.75 yalms before Close-up distance, with a smoothstep curve. The same band works in reverse when zooming out. There is no abrupt delta switch at the close-up boundary.
