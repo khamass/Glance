@@ -20,4 +20,4 @@ internal sealed class CameraAngleSetting
         Original = null;
     }
 }
-
+

@@ -64,5 +64,5 @@ public sealed class Configuration : IPluginConfiguration
         Version = 4;
     }
 }
-
-
+
+

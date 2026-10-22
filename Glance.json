@@ -1,18 +1,18 @@
-{
-  "Author": "Macki",
-  "Name": "Glance",
-  "InternalName": "Glance",
-  "AssemblyVersion": "1.0.1.0",
-  "Description": "Camera-facing gaze, configurable close-up framing, themed personality moods and a searchable catalog of unlocked in-game emotes. Customize facial expressions or opt into body animations. Configure with /glance. Icon created with AI assistance.",
-  "Punchline": "A little eye contact. A little personality.",
-  "ApplicableVersion": "any",
-  "DalamudApiLevel": 15,
-  "Tags": [
-    "camera",
-    "character",
-    "posing"
-  ],
-  "RepoUrl": "https://github.com/khamass/Glance",
-  "IconUrl": "https://raw.githubusercontent.com/khamass/Glance/main/images/icon.png",
-  "Changelog": "Reliability update: settings edits preserve gaze, saves are debounced, interrupted camera-angle overrides have character/control-mode recovery, cleanup is safer, and emote pools are cached."
-}
+{
+  "Author": "Macki",
+  "Name": "Glance",
+  "InternalName": "Glance",
+  "AssemblyVersion": "1.0.1.0",
+  "Description": "Camera-facing gaze, configurable close-up framing, themed personality moods and a searchable catalog of unlocked in-game emotes. Customize facial expressions or opt into body animations. Configure with /glance. Icon created with AI assistance.",
+  "Punchline": "A little eye contact. A little personality.",
+  "ApplicableVersion": "any",
+  "DalamudApiLevel": 15,
+  "Tags": [
+    "camera",
+    "character",
+    "posing"
+  ],
+  "RepoUrl": "https://github.com/khamass/Glance",
+  "IconUrl": "https://raw.githubusercontent.com/khamass/Glance/main/images/icon.png",
+  "Changelog": "Reliability update: settings edits preserve gaze, saves are debounced, interrupted camera-angle overrides have character/control-mode recovery, cleanup is safer, and emote pools are cached."
+}
