@@ -15,6 +15,9 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
     private readonly CameraAngleSetting angleSetting = new();
     private readonly IGameConfig gameConfig;
     private readonly IGameInteropProvider interop;
+    private readonly Func<float, bool> beginAngleOverride;
+    private readonly Func<bool> canRestoreAngle;
+    private readonly Action<bool> endAngleOverride;
     private Hook<Camera.Delegates.GetZoomSpeed>? zoomSpeed;
     private bool fineZoom;
     private float zoomThreshold;
@@ -28,10 +31,14 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
     private nint playerAddress;
     public bool Active => limit.Active;
 
-    public ExtendedCloseUp(IGameInteropProvider interop, IGameConfig gameConfig)
+    public ExtendedCloseUp(IGameInteropProvider interop, IGameConfig gameConfig,
+        Func<float, bool> beginAngleOverride, Func<bool> canRestoreAngle, Action<bool> endAngleOverride)
     {
         this.gameConfig = gameConfig;
         this.interop = interop;
+        this.beginAngleOverride = beginAngleOverride;
+        this.canRestoreAngle = canRestoreAngle;
+        this.endAngleOverride = endAngleOverride;
         visibility = interop.HookFromAddress<CameraBase.Delegates.ShouldDrawGameObject>(
             CameraBase.MemberFunctionPointers.ShouldDrawGameObject, ShouldDraw);
         // Enable only while a normal third-person camera is eligible.
@@ -42,6 +49,7 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
     {
         var manager = CameraManager.Instance();
         var camera = manager == null ? null : manager->Camera;
+        if (AngleActive && (!canRestoreAngle() || (playerAddress != 0 && playerAddress != player))) RestoreAngle();
         if (cameraAddress != (nint)camera)
         {
             RestoreAngle();
@@ -69,6 +77,7 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
         camera->MinDistance = limit.Apply(camera->MinDistance, minimum);
         // Raising the slider must also move an already closer camera back out.
         ClampDistance(camera, camera->MinDistance);
+        if (!visibility.IsEnabled) visibility.Enable();
         var wasClose = AngleActive;
         if (wasClose && gameConfig.TryGet(UiControlOption.TiltOffset, out float configured)
             && MathF.Abs(configured - requestedTilt) > 0.002f)
@@ -80,6 +89,8 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
         {
             if (gameConfig.TryGet(UiControlOption.TiltOffset, out float current))
             {
+                // Commit the backup before the first persistent game-setting write.
+                if (!AngleActive && !beginAngleOverride(current)) return;
                 angleSetting.Apply(current, current, WriteAngleSetting);
                 var baseline = angleSetting.Original ?? current;
                 requestedTilt = baseline + (CloseUpAngle.ToNative(angleValue) - baseline) * angleBlend;
@@ -88,7 +99,6 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
             camera->UpdateTiltOffset();
         }
         else if (wasClose) RestoreAngle(restore: true);
-        if (!visibility.IsEnabled) visibility.Enable();
     }
 
     private float GetZoomSpeed(Camera* camera)
@@ -104,7 +114,7 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
 
     private void ApplyAngleSetting()
     {
-        if (gameConfig.TryGet(UiControlOption.TiltOffset, out float value))
+        if (AngleActive && gameConfig.TryGet(UiControlOption.TiltOffset, out float value))
             angleSetting.Apply(value, requestedTilt, WriteAngleSetting);
     }
 
@@ -113,7 +123,13 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
     private void RestoreAngle(bool restore = false)
     {
         var hadAngle = AngleActive;
-        angleSetting.Restore(WriteAngleSetting);
+        if (hadAngle)
+        {
+            var restoreHere = canRestoreAngle();
+            if (restoreHere) angleSetting.Restore(WriteAngleSetting);
+            else angleSetting.Forget();
+            endAngleOverride(restoreHere);
+        }
         var manager = CameraManager.Instance();
         if ((hadAngle || restore) && manager != null && (nint)manager->Camera == cameraAddress)
         {
@@ -146,22 +162,29 @@ internal sealed unsafe class ExtendedCloseUp : IDisposable
     {
         fineZoom = false;
         if (zoomSpeed?.IsEnabled == true) zoomSpeed.Disable();
-        RestoreAngle();
-        if (visibility.IsEnabled) visibility.Disable();
-        var manager = CameraManager.Instance();
-        if (limit.Active && manager != null && (nint)manager->Camera == cameraAddress)
+        try { RestoreAngle(); }
+        finally
         {
-            var camera = manager->Camera;
-            camera->MinDistance = limit.Restore(camera->MinDistance);
-            if (camera->ZoomMode == CameraZoomMode.ThirdPerson) ClampDistance(camera, camera->MinDistance);
+            if (visibility.IsEnabled) visibility.Disable();
+            var manager = CameraManager.Instance();
+            if (limit.Active && manager != null && (nint)manager->Camera == cameraAddress)
+            {
+                var camera = manager->Camera;
+                camera->MinDistance = limit.Restore(camera->MinDistance);
+                if (camera->ZoomMode == CameraZoomMode.ThirdPerson) ClampDistance(camera, camera->MinDistance);
+            }
+            limit.Forget(); cameraAddress = 0; playerAddress = 0;
         }
-        limit.Forget(); cameraAddress = 0; playerAddress = 0;
     }
 
     public void Dispose()
     {
-        Restore();
-        visibility.Dispose();
-        zoomSpeed?.Dispose();
+        try { Restore(); }
+        finally
+        {
+            try { visibility.Dispose(); }
+            finally { zoomSpeed?.Dispose(); }
+        }
     }
 }
+

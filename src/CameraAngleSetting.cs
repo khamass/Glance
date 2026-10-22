@@ -11,6 +11,8 @@ internal sealed class CameraAngleSetting
         if (MathF.Abs(current - requested) > 0.00001f) write(requested);
     }
 
+    public void Forget() => Original = null;
+
     public void Restore(Action<float> write)
     {
         if (Original is not { } value) return;
@@ -18,3 +20,4 @@ internal sealed class CameraAngleSetting
         Original = null;
     }
 }
+

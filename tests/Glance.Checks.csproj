@@ -15,4 +15,8 @@
   <ItemGroup><Compile Include="..\src\CloseUpTransition.cs" Link="CloseUpTransition.cs" /></ItemGroup>
   <ItemGroup><Compile Include="..\src\CameraAngleSetting.cs" Link="CameraAngleSetting.cs" /></ItemGroup>
   <ItemGroup><Compile Include="..\src\PersonalityThemes.cs" Link="PersonalityThemes.cs" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\src\AngleRecovery.cs" Link="AngleRecovery.cs" />
+    <Compile Include="..\src\SettingsSaveDebounce.cs" Link="SettingsSaveDebounce.cs" />
+  </ItemGroup>
 </Project>

@@ -4,6 +4,7 @@ using System.Text.Json;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Command;
+using Dalamud.Game.Config;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -20,6 +21,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
     [PluginService] internal static IDalamudPluginInterface Interface { get; private set; } = null!;
     [PluginService] internal static IFramework Framework { get; private set; } = null!;
     [PluginService] internal static IObjectTable Objects { get; private set; } = null!;
+    [PluginService] internal static IPlayerState PlayerState { get; private set; } = null!;
     [PluginService] internal static IClientState Client { get; private set; } = null!;
     [PluginService] internal static ICondition Condition { get; private set; } = null!;
     [PluginService] internal static ICommandManager Commands { get; private set; } = null!;
@@ -31,6 +33,10 @@ public sealed unsafe class Plugin : IDalamudPlugin
     [PluginService] internal static IUnlockState Unlocks { get; private set; } = null!;
 
     private readonly Configuration config;
+    private readonly SettingsSaveDebounce settingsSave = new();
+    private bool recoveryRequired;
+    private int recoveryRequest; // 1: restore saved angle, 2: keep current angle
+    private bool disposed;
     private bool open;
     private bool active;
     private nint lastPlayer;
@@ -62,12 +68,103 @@ public sealed unsafe class Plugin : IDalamudPlugin
         catalog = new EmoteCatalog(Data, Unlocks);
         config = LoadConfiguration();
         config.Sanitize();
-        Interface.SavePluginConfig(config);
+        recoveryRequired = config.PendingAngleRecovery != null;
+        open = recoveryRequired;
+        SaveConfiguration();
         Commands.AddHandler("/glance", new CommandInfo(OnCommand) { HelpMessage = "Open Glance. /glance on | off | toggle" });
         Interface.UiBuilder.Draw += Draw;
         Interface.UiBuilder.OpenConfigUi += Open;
         Interface.UiBuilder.OpenMainUi += Open;
         Framework.Update += Update;
+    }
+
+    private void SaveConfiguration()
+    {
+        Interface.SavePluginConfig(config);
+        settingsSave.Saved();
+    }
+
+    private bool BeginAngleOverride(float original)
+    {
+        if (recoveryRequired || config.PendingAngleRecovery != null || !Client.IsLoggedIn) return false;
+        if (!PlayerState.IsLoaded
+            || !GameConfig.TryGet(SystemConfigOption.PadMode, out uint systemMode)
+            || !GameConfig.TryGet(UiConfigOption.PadMode, out uint characterMode)) return false;
+        var backup = new AngleRecovery { ContentId = PlayerState.ContentId, Original = original,
+            SystemPadMode = systemMode, CharacterPadMode = characterMode };
+        if (!backup.IsValid) return false;
+        config.PendingAngleRecovery = backup;
+        try { SaveConfiguration(); }
+        catch { config.PendingAngleRecovery = null; throw; }
+        return true;
+    }
+
+    private bool CanRestoreAngle() => Client.IsLoggedIn && PlayerState.IsLoaded
+        && GameConfig.TryGet(SystemConfigOption.PadMode, out uint systemMode)
+        && GameConfig.TryGet(UiConfigOption.PadMode, out uint characterMode)
+        && config.PendingAngleRecovery?.Matches(PlayerState.ContentId, systemMode, characterMode) == true;
+
+    private void EndAngleOverride(bool restored)
+    {
+        if (restored)
+        {
+            var backup = config.PendingAngleRecovery;
+            config.PendingAngleRecovery = null;
+            try { SaveConfiguration(); }
+            catch
+            {
+                config.PendingAngleRecovery = backup;
+                recoveryRequired = true; open = true;
+                throw;
+            }
+        }
+        else { recoveryRequired = true; open = true; }
+    }
+
+    private void ProcessAngleRecovery()
+    {
+        var request = recoveryRequest;
+        recoveryRequest = 0;
+        if (!recoveryRequired || request == 0 || !CanRestoreAngle()) return;
+        if (request == 1)
+        {
+            GameConfig.Set(UiControlOption.TiltOffset, config.PendingAngleRecovery!.Original);
+            var manager = CameraManager.Instance();
+            if (manager != null && manager->Camera != null) manager->Camera->UpdateTiltOffset();
+        }
+        // Require an explicit re-enable, so recovery is not immediately overwritten in a close-up.
+        config.OverrideCloseUpAngle = false;
+        config.PendingAngleRecovery = null;
+        SaveConfiguration();
+        recoveryRequired = false;
+    }
+
+    private void DrawAngleRecovery()
+    {
+        if (!recoveryRequired) return;
+        ImGui.TextWrapped("A previous camera-angle override did not finish. Angle overrides are paused until you choose how to recover.");
+        var backup = config.PendingAngleRecovery;
+        if (backup?.IsValid != true)
+        {
+            ImGui.TextWrapped("The saved backup is invalid. Keep your current angle to discard it.");
+            if (ImGui.Button("Discard invalid camera backup"))
+            {
+                config.PendingAngleRecovery = null;
+                config.OverrideCloseUpAngle = false;
+                SaveConfiguration();
+                recoveryRequired = false;
+            }
+        }
+        else if (CanRestoreAngle())
+        {
+            var original = Math.Clamp((backup.Original + 0.08f) / 0.29f * 100f, 0, 100);
+            ImGui.TextUnformatted($"Saved camera angle: {original:0}");
+            if (ImGui.Button("Restore saved angle")) recoveryRequest = 1;
+            ImGui.SameLine();
+            if (ImGui.Button("Keep current angle")) recoveryRequest = 2;
+        }
+        else ImGui.TextWrapped("Log in to the original character and use the same keyboard/gamepad control mode to restore or discard this backup.");
+        ImGui.Separator();
     }
 
     private void Open() => open = true;
@@ -100,7 +197,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
         }
         Pause(config.Enabled ? "Enabled" : "Disabled");
         if (!config.Enabled) closeUp?.Restore();
-        Interface.SavePluginConfig(config);
+        SaveConfiguration();
     }
 
     private void ReleaseGaze()
@@ -154,17 +251,23 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
     private void Update(IFramework framework)
     {
+        if (disposed) return;
         try
         {
+            ProcessAngleRecovery();
+            if (settingsSave.Due(Environment.TickCount64)) SaveConfiguration();
             UpdateCloseUp();
             Tick((float)framework.UpdateDelta.TotalSeconds);
         }
         catch (Exception ex)
         {
             config.Enabled = false;
-            closeUp?.Restore();
-            Pause("Disabled after an error; see /xllog");
             Log.Error(ex, "Glance update failed; disabled until manually enabled.");
+            try { SaveConfiguration(); }
+            catch (Exception saveError) { Log.Error(saveError, "Could not persist disabled state."); }
+            try { closeUp?.Restore(); }
+            catch (Exception restoreError) { Log.Error(restoreError, "Could not restore camera settings; recovery backup retained."); }
+            Pause("Disabled after an error; see /xllog");
         }
     }
 
@@ -181,7 +284,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             && !Condition[ConditionFlag.Occupied];
         if (eligible && closeUp == null && closeUpError == null)
         {
-            try { closeUp = new ExtendedCloseUp(Interop, GameConfig); }
+            try { closeUp = new ExtendedCloseUp(Interop, GameConfig, BeginAngleOverride, CanRestoreAngle, EndAngleOverride); }
             catch (Exception ex)
             {
                 closeUpError = "Extended close-up unavailable; see /xllog";
@@ -189,7 +292,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             }
         }
         closeUp?.Update(eligible, player?.Address ?? 0, config.MinimumCameraDistance,
-            config.OverrideCloseUpAngle, config.CloseUpCameraAngle, config.CloseUpAngleDistance,
+            config.OverrideCloseUpAngle && !recoveryRequired, config.CloseUpCameraAngle, config.CloseUpAngleDistance,
             config.FineCloseUpZoom, config.Distance, config.CloseUpZoomDelta,
             (float)Framework.UpdateDelta.TotalSeconds, config.CloseUpTransitionSeconds);
     }
@@ -371,7 +474,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
     private void Draw()
     {
-        if (!open) return;
+        if (disposed || !open) return;
         ImGui.SetNextWindowSize(new Vector2(480, 380), ImGuiCond.FirstUseEver);
         if (ImGui.Begin("Glance###Glance", ref open, ImGuiWindowFlags.AlwaysAutoResize))
         {
@@ -386,6 +489,9 @@ public sealed unsafe class Plugin : IDalamudPlugin
             ImGui.EndGroup();
             ImGui.Spacing();
             ImGui.Separator();
+            DrawAngleRecovery();
+            var enabledBefore = config.Enabled;
+            var personalityChanged = false;
             var changed = ImGui.Checkbox("Meet my gaze", ref config.Enabled);
             changed |= ImGui.SliderFloat("Close-up distance", ref config.Distance, 1f, 10f, "%.1f yalms");
             changed |= ImGui.SliderFloat("Gaze responsiveness", ref config.Response, 5f, 90f, "%.0f");
@@ -423,14 +529,15 @@ public sealed unsafe class Plugin : IDalamudPlugin
             ImGui.TextColored(new Vector4(0.92f, 0.78f, 0.49f, 1), "PERSONALITY");
             var personality = (int)config.Personality;
             if (ImGui.Combo("Mood", ref personality, "Wink (classic)\0Playful\0Friendly\0Dramatic\0Custom\0Off - gaze only\0Expressive (joy / pose)\0Shy\0Confident\0Cheerful\0Mischievous\0Thoughtful\0Affectionate\0Melancholic\0Theatrical\0Celebratory\0Dance party\0Facial shuffle\0"))
-            { config.Personality = (Personality)personality; changed = true; }
-            changed |= ImGui.Checkbox("Allow body animations", ref config.AllowBodyMotions);
+            { config.Personality = (Personality)personality; changed = personalityChanged = true; }
+            personalityChanged |= ImGui.Checkbox("Allow body animations", ref config.AllowBodyMotions);
+            changed |= personalityChanged;
             if (config.Personality == Personality.Custom)
             {
                 ImGui.InputText("Search emotes", ref emoteSearch, 120);
                 ImGui.TextWrapped("Shows unlocked emotes from your installed game. Body animations may move, turn, or loop; facial cleanup does not stop their motion.");
                 if (ImGui.Button("Clear custom selection"))
-                { config.CustomEmoteIds.Clear(); config.CustomExpressions = ExpressionChoices.None; changed = true; }
+                { config.CustomEmoteIds.Clear(); config.CustomExpressions = ExpressionChoices.None; changed = personalityChanged = true; }
                 if (ImGui.BeginChild("Emote catalog", new Vector2(450, 230), true))
                 {
                     foreach (var definition in (Client.IsLoggedIn ? catalog.Available(config.AllowBodyMotions) : []).Where(e =>
@@ -447,12 +554,13 @@ public sealed unsafe class Plugin : IDalamudPlugin
                                 config.CustomEmoteIds.Remove(definition.EmoteId);
                                 config.CustomExpressions &= ~definition.Choice;
                             }
-                            changed = true;
+                            changed = personalityChanged = true;
                         }
                     }
                 }
                 ImGui.EndChild();
             }
+            if (personalityChanged) catalog.InvalidatePool();
             var pool = Client.IsLoggedIn ? catalog.Pool(config) : [];
             if (config.Personality != Personality.Custom && config.Personality != Personality.Off
                 && pool.Count > 0 && ImGui.Button("Copy this mood to Custom"))
@@ -460,7 +568,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 config.CustomEmoteIds = pool.Select(e => e.EmoteId).ToHashSet();
                 config.CustomExpressions = ExpressionChoices.None;
                 config.Personality = Personality.Custom;
-                changed = true;
+                changed = personalityChanged = true;
             }
             if (pool.Any(e => e.BodyMotion))
                 ImGui.TextWrapped("This mood includes body animations. They may move or turn the character, and some loop. Holds control facial cleanup only. Stop looping emotes manually by moving.");
@@ -490,8 +598,15 @@ public sealed unsafe class Plugin : IDalamudPlugin
             }
             if (changed)
             {
-                Pause("Settings updated"); winkCadence.Reset(); rotationCadence.Reset();
-                config.Sanitize(); Interface.SavePluginConfig(config);
+                if (enabledBefore != config.Enabled) Pause(config.Enabled ? "Enabled" : "Disabled");
+                if (personalityChanged)
+                {
+                    CancelExpression(); winkPending = false;
+                    winkCadence.Reset(); rotationCadence.Reset();
+                    catalog.InvalidatePool();
+                }
+                config.Sanitize();
+                settingsSave.Changed(Environment.TickCount64);
                 if (!config.Enabled || !config.ExtendedCloseUp) closeUp?.Restore();
             }
             ImGui.Separator();
@@ -509,15 +624,21 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
     public void Dispose()
     {
-        closeUp?.Dispose();
-        CancelExpression();
-        expressions.Discard();
-        ReleaseGaze();
+        if (disposed) return;
+        disposed = true;
         Framework.Update -= Update;
         Interface.UiBuilder.Draw -= Draw;
         Interface.UiBuilder.OpenConfigUi -= Open;
         Interface.UiBuilder.OpenMainUi -= Open;
         Commands.RemoveHandler("/glance");
+        try { closeUp?.Dispose(); }
+        finally
+        {
+            CancelExpression();
+            expressions.Discard();
+            ReleaseGaze();
+            if (settingsSave.Pending) SaveConfiguration();
+        }
     }
 }
 

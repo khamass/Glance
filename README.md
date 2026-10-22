@@ -68,7 +68,7 @@ Normal activity pauses the relevant controls: combat, PvP, mounts, casting, deat
 
 - Other camera plugins can overwrite zoom or angle controls. If framing jumps, compare with those controls disabled in the other plugin. Glance's conflict message is a diagnostic, not proof of a particular culprit.
 - Body emotes can move or turn the character, need a target, or loop. `/straightface` and hold timers reset the face only. Move manually to stop a looping body motion.
-- The close-up angle temporarily changes the actual Character Configuration setting. A crash or forced termination during close-up may leave that temporary value set; restore your preferred angle in Character Configuration if needed.
+- The close-up angle temporarily changes the actual Character Configuration setting. A crash or forced termination during close-up may leave that temporary value set. Glance saves a recovery backup before overriding it; on the original character and keyboard/gamepad mode, choose **Restore saved angle** or **Keep current angle** in `/glance`. Either choice disables angle override until you explicitly enable it again. You can also adjust the angle manually in Character Configuration.
 - Game updates can require a compatible Glance/Dalamud build. Compilation and automated tests do not establish compatibility with every game state or plugin combination.
 - Glance is not an official Dalamud repository listing. Extended camera bounds fall outside the official repository's [publishing restrictions](https://dalamud.dev/plugin-publishing/restrictions/).
 
@@ -95,4 +95,3 @@ For a different library location, pass `-p:DalamudLibPath=C:\path\to\dev` when b
 ## Credits
 
 Created by **Macki** ([khamass](https://github.com/khamass)). Source was developed with substantial AI assistance, with human design direction and in-game feedback. The icon was generated with AI assistance. [MIT License](LICENSE).
-

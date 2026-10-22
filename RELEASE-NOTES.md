@@ -1,3 +1,17 @@
+# Glance v1.0.1 — Reliability update
+
+By Macki.
+
+- Adjust settings without repeatedly restarting camera-facing gaze. Personality changes cancel the current expression and reset its cadence while keeping gaze active.
+- Debounce configuration saves until 500 ms after the latest edit; flush pending changes on unload.
+- Save the original camera angle before an override, associated with the active character and keyboard/gamepad mode. If an override is interrupted, Glance pauses angle overrides and offers **Restore saved angle** or **Keep current angle** on that character and control mode. Either choice leaves angle override disabled until explicitly enabled again.
+- Unsubscribe callbacks before disposing hooks, ensure hook disposal is attempted if camera restoration fails, and persist the disabled state after an update error.
+- Cache expression pools and available emotes until selection or unlock status changes.
+
+Release build passes with zero warnings/errors; all 344 automated checks pass. The maintainer reports the in-game checklist completed. Automated checks do not exercise native hooks or prove compatibility with other camera plugins. Existing settings are preserved. Gaze-vector detection is unchanged pending controlled native-format validation.
+
+Update through **Update plugins** in `/xlplugins`. A crash can still leave a temporary camera angle in the game configuration until recovered; the backup enables a recovery choice rather than automatic restoration during a crash.
+
 # Glance v1.0.0 — First stable release
 
 By Macki. Glance graduates from beta with the existing v0.5.2 feature set: camera-facing gaze, smooth extended close-ups, configurable camera angle and fine zoom delta, eighteen mood choices and a searchable catalog of unlocked emotes. Existing settings are preserved. This release updates versioning and release metadata without changing gameplay behavior.

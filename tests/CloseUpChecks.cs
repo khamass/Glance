@@ -9,6 +9,26 @@ internal static class CloseUpChecks
             if (!value) throw new Exception(name);
             Console.WriteLine("PASS " + name);
         }
+        var save = new SettingsSaveDebounce();
+        save.Changed(0);
+        Check(!save.Due(499), "Slider edits do not save every frame");
+        save.Changed(400);
+        Check(!save.Due(500) && save.Due(900), "Continued edits postpone one debounced save");
+        save.Saved();
+        Check(!save.Pending && !save.Due(1500), "An immediate recovery save consumes pending settings edits");
+        var recovery = new AngleRecovery { ContentId = 123, Original = CloseUpAngle.ToNative(20) };
+        Check(recovery.Matches(123) && !recovery.Matches(456) && !recovery.Matches(0),
+            "Angle recovery is restricted to the original logged-in character");
+        Check(recovery.Matches(123, 0, 0) && !recovery.Matches(123, 1, 0) && !recovery.Matches(123, 0, 1),
+            "Angle recovery cannot cross keyboard/gamepad configuration modes");
+        Check(!new AngleRecovery { ContentId = 123, Original = float.NaN }.IsValid
+            && !new AngleRecovery { ContentId = 123, Original = 1f }.IsValid,
+            "Corrupt angle backups cannot write invalid game settings");
+        var abandoned = new CameraAngleSetting();
+        abandoned.Apply(0.02f, 0.06f, _ => { });
+        abandoned.Forget();
+        abandoned.Restore(_ => throw new Exception("Wrong character restore"));
+        Check(abandoned.Original == null, "Abandoning an override never restores another character's setting");
         var limit = new CloseUpLimit();
         Check(CloseUpZoom.Apply(0.75f, true, 1f, 3f, 0.1f) == 0.1f,
             "Close-up uses the selected zoom delta");

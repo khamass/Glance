@@ -9,6 +9,10 @@ internal sealed class EmoteCatalog
     private readonly IDataManager data;
     private readonly IUnlockState unlocks;
     private readonly List<(Emote Row, ExpressionDefinition Definition, string EnglishCommand)> entries = new();
+    private IReadOnlyList<ExpressionDefinition>? cachedPool;
+    private IReadOnlyList<ExpressionDefinition>? cachedAll;
+    private IReadOnlyList<ExpressionDefinition>? cachedFacial;
+    private (Personality, ExpressionChoices, bool) poolKey;
     private long refreshAt;
     private HashSet<uint> unlockedIds = new();
     public EmoteCatalog(IDataManager data, IUnlockState unlocks) { this.data = data; this.unlocks = unlocks; }
@@ -34,6 +38,7 @@ internal sealed class EmoteCatalog
             entries.Add((row, definition, englishCommand));
         }
         entries.Sort((a, b) => string.Compare(a.Definition.Name, b.Definition.Name, StringComparison.CurrentCultureIgnoreCase));
+        Invalidate();
     }
 
     private static bool ValidCommand(string command) => command.StartsWith('/') && command.Length > 1
@@ -42,15 +47,26 @@ internal sealed class EmoteCatalog
     public IReadOnlyList<ExpressionDefinition> Available(bool allowBody)
     {
         RefreshUnlocks();
-        return entries.Where(e => (allowBody || !e.Definition.BodyMotion) && unlockedIds.Contains(e.Row.RowId))
-            .Select(e => e.Definition).ToArray();
+        if (allowBody) return cachedAll ??= BuildAvailable(true);
+        return cachedFacial ??= BuildAvailable(false);
     }
 
-    public void Invalidate() { refreshAt = 0; unlockedIds.Clear(); }
+    private IReadOnlyList<ExpressionDefinition> BuildAvailable(bool allowBody) =>
+        entries.Where(e => (allowBody || !e.Definition.BodyMotion) && unlockedIds.Contains(e.Row.RowId))
+            .Select(e => e.Definition).ToArray();
+
+    public void InvalidatePool() => cachedPool = null;
+    private void InvalidateCaches() { InvalidatePool(); cachedAll = cachedFacial = null; }
+    public void Invalidate() { refreshAt = 0; unlockedIds.Clear(); InvalidateCaches(); }
     private void RefreshUnlocks()
     {
         if (Environment.TickCount64 < refreshAt) return;
-        unlockedIds = entries.Where(e => unlocks.IsEmoteUnlocked(e.Row)).Select(e => e.Row.RowId).ToHashSet();
+        var refreshed = entries.Where(e => unlocks.IsEmoteUnlocked(e.Row)).Select(e => e.Row.RowId).ToHashSet();
+        if (!unlockedIds.SetEquals(refreshed))
+        {
+            unlockedIds = refreshed;
+            InvalidateCaches();
+        }
         refreshAt = Environment.TickCount64 + 1000;
     }
 
@@ -58,8 +74,11 @@ internal sealed class EmoteCatalog
     {
         if (config.Personality == Personality.Off) return [];
         RefreshUnlocks();
+        var key = (config.Personality, config.CustomExpressions, config.AllowBodyMotions);
+        if (cachedPool != null && key == poolKey) return cachedPool;
+        poolKey = key;
         var legacy = Expressions.Pool(config.Personality, config.CustomExpressions);
-        return entries.Where(e => (config.AllowBodyMotions || !e.Definition.BodyMotion)
+        return cachedPool = entries.Where(e => (config.AllowBodyMotions || !e.Definition.BodyMotion)
             && (config.Personality == Personality.Custom
                 ? (legacy & e.Definition.Choice) != 0 || config.CustomEmoteIds.Contains(e.Row.RowId)
                 : (legacy & e.Definition.Choice) != 0 || PersonalityThemes.Matches(config.Personality, e.EnglishCommand, e.Definition.BodyMotion))
