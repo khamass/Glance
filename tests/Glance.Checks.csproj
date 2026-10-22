@@ -1,18 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-  <ItemGroup><Compile Include="..\src\FacingMath.cs" Link="FacingMath.cs" /></ItemGroup>
-  <ItemGroup><Compile Include="..\src\WinkCadence.cs" Link="WinkCadence.cs" /></ItemGroup>
-  <ItemGroup><Compile Include="..\src\RotationCadence.cs" Link="RotationCadence.cs" /></ItemGroup>
-  <ItemGroup><Compile Include="..\src\Expressions.cs" Link="Expressions.cs" /></ItemGroup>
-  <ItemGroup><Compile Include="..\src\CloseUpLimit.cs" Link="CloseUpLimit.cs" /></ItemGroup>
-  <ItemGroup><Compile Include="..\src\CloseUpAngle.cs" Link="CloseUpAngle.cs" /></ItemGroup>
-  <ItemGroup><Compile Include="..\src\CloseUpZoom.cs" Link="CloseUpZoom.cs" /></ItemGroup>
-  <ItemGroup><Compile Include="..\src\CloseUpTransition.cs" Link="CloseUpTransition.cs" /></ItemGroup>
-  <ItemGroup><Compile Include="..\src\CameraAngleSetting.cs" Link="CameraAngleSetting.cs" /></ItemGroup>
-  <ItemGroup><Compile Include="..\src\PersonalityThemes.cs" Link="PersonalityThemes.cs" /></ItemGroup>
-</Project>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup><Compile Include="..\src\FacingMath.cs" Link="FacingMath.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\WinkCadence.cs" Link="WinkCadence.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\RotationCadence.cs" Link="RotationCadence.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\Expressions.cs" Link="Expressions.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\CloseUpLimit.cs" Link="CloseUpLimit.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\CloseUpAngle.cs" Link="CloseUpAngle.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\CloseUpZoom.cs" Link="CloseUpZoom.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\CloseUpTransition.cs" Link="CloseUpTransition.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\CameraAngleSetting.cs" Link="CameraAngleSetting.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="..\src\PersonalityThemes.cs" Link="PersonalityThemes.cs" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\src\AngleRecovery.cs" Link="AngleRecovery.cs" />
+    <Compile Include="..\src\SettingsSaveDebounce.cs" Link="SettingsSaveDebounce.cs" />
+  </ItemGroup>
+</Project>

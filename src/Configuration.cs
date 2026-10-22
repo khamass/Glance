@@ -17,6 +17,7 @@ public sealed class Configuration : IPluginConfiguration
     public float CloseUpCameraAngle = 50f;
     public float CloseUpAngleDistance = 1.5f;
     public float MinimumCameraDistance = 0.5f;
+    public AngleRecovery? PendingAngleRecovery;
     public Personality Personality = Personality.Wink;
     public ExpressionChoices CustomExpressions = ExpressionChoices.Wink;
     public HashSet<uint> CustomEmoteIds = new();
@@ -63,4 +64,5 @@ public sealed class Configuration : IPluginConfiguration
         Version = 4;
     }
 }
-
+
+
