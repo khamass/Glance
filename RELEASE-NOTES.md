@@ -12,7 +12,7 @@ Release build passes with zero warnings/errors; all 344 automated checks pass. T
 
 Update through **Update plugins** in `/xlplugins`. A crash can still leave a temporary camera angle in the game configuration until recovered; the backup enables a recovery choice rather than automatic restoration during a crash.
 
-# Glance v1.0.0 â€” First stable release
+# Glance v1.0.0 — First stable release
 
 By Macki. Glance graduates from beta with the existing v0.5.2 feature set: camera-facing gaze, smooth extended close-ups, configurable camera angle and fine zoom delta, eighteen mood choices and a searchable catalog of unlocked emotes. Existing settings are preserved. This release updates versioning and release metadata without changing gameplay behavior.
 
@@ -20,15 +20,15 @@ Install or update through the custom repository. This is not an official Dalamud
 
 Release build and automated checks pass. Stable status reflects the maintainer's release decision; it does not imply new in-game verification in this packaging run.
 
-# Glance v0.5.2 â€” Smooth close-up transitions
+# Glance v0.5.2 — Smooth close-up transitions
 
 Fine zoom now blends the original zoom speed into the selected delta across the 0.75 yalms before Close-up distance, with a smoothstep curve. The same band works in reverse when zooming out. There is no abrupt delta switch at the close-up boundary.
 
-The camera angle uses a similar distance blend before Angle activation distance, plus frame-rate-independent time easing. **Close-up transition time** ranges from 0.10â€“1.50 seconds, default 0.35; it controls angle easing response. The original configured angle is captured once, remains the blend baseline, and is restored exactly when the exit blend completes. Disabling, pausing, changing camera mode or unloading still restores immediately rather than delaying cleanup. Minimum-distance limits remain unchanged.
+The camera angle uses a similar distance blend before Angle activation distance, plus frame-rate-independent time easing. **Close-up transition time** ranges from 0.10–1.50 seconds, default 0.35; it controls angle easing response. The original configured angle is captured once, remains the blend baseline, and is restored exactly when the exit blend completes. Disabling, pausing, changing camera mode or unloading still restores immediately rather than delaying cleanup. Minimum-distance limits remain unchanged.
 
 Build and automated continuity, frame-rate and exact-restoration checks pass. Actual framing and scrolling with camera plugins still require in-game testing.
 
-# Glance v0.5.1 â€” Fine close-up zoom
+# Glance v0.5.1 — Fine close-up zoom
 
 Adds **Fine close-up zoom** and a **Close-up zoom delta** slider under Extended close-up. Delta ranges from 0.01 to 1.00, default 0.10. Smaller values give finer zoom steps. The override applies in both directions while within the existing Close-up distance, so zooming back out is also controlled. Outside that distance the original camera zoom-speed function is used.
 
@@ -36,7 +36,7 @@ Fine zoom is enabled by default when Extended close-up is enabled. Turning it of
 
 Includes the unpublished v0.5.0 personality expansion below. Release build and automated delta bounds, activation and fallback checks pass; actual scrolling, mouse/controller input and camera-plugin compatibility need in-game verification.
 
-# Glance v0.5.0 â€” Personality catalog
+# Glance v0.5.0 — Personality catalog
 
 Adds eleven mood choices: Shy, Confident, Cheerful, Mischievous, Thoughtful, Affectionate, Melancholic, Theatrical, Celebratory, Dance party and Facial shuffle. Together with the existing seven options, the mood menu now has eighteen choices. Existing Wink, Playful, Friendly, Dramatic and Expressive pools retain their original definitions and saved numeric identities.
 
@@ -44,13 +44,13 @@ Custom now browses named performance emotes from the installed game's Emote shee
 
 Copy an available mood to Custom, select individual emotes and adjust their holds. Existing custom flag selections remain usable alongside new selections stored by stable game row IDs. No arbitrary user command strings are executed. Motion-only commands avoid emote chat text. Random selection avoids consecutive repeats by command, including catalog emotes that share the generic expression kind.
 
-The Allow body animations toggle filters every pool. Known facial commands are classified as facial; unknown/new performance commands conservatively count as body animations. Facial shuffle uses only the known facial set. New catalog body emotes default to an eight-second cooldown and support 0.1â€“30 seconds. Facial holds support 0.1â€“5 seconds; legacy Joy/Pose retain their saved timing and five-second UI range. Wink retains its smile transition.
+The Allow body animations toggle filters every pool. Known facial commands are classified as facial; unknown/new performance commands conservatively count as body animations. Facial shuffle uses only the known facial set. New catalog body emotes default to an eight-second cooldown and support 0.1–30 seconds. Facial holds support 0.1–5 seconds; legacy Joy/Pose retain their saved timing and five-second UI range. Wink retains its smile transition.
 
 Body motions can move or turn the character, need targets or other conditions, or loop. Hold/cooldown and /straightface only control facial cleanup: they do not guarantee that a body animation stops. Move manually to stop a looping emote. Locked emotes are never automatically selected, but unlock status cannot guarantee that an emote is usable in every context. No consecutive emote sequences overlap in Glance's scheduler; native body animation lifetimes may exceed its cooldown.
 
 Release build and automated checks pass for legacy compatibility, theme rules, generic-ID repeat avoidance, long cooldowns and cancellation. Actual emote execution, localized data, unlock refresh and body behavior still require in-game testing. Camera behavior is unchanged from v0.4.3.
 
-# Glance v0.4.3 â€” Apply the game camera angle
+# Glance v0.4.3 — Apply the game camera angle
 
 Replaces the live TiltOffset field override with the actual UiControl TiltOffset configuration API. The prior implementation could be overwritten by the game's camera recalculation and its diagnostic could mislabel that as another plugin's interference.
 
@@ -58,13 +58,13 @@ Inside the configured close-up range, Glance temporarily sets Character Configur
 
 The conflict diagnostic now observes the configuration setting, rather than a live camera interpolation field. Other plugins can still write later or change framing through other methods; disable their angle controls when testing. Build and automated configuration-capture/restore checks pass; in-game verification is required.
 
-# Glance v0.4.2 â€” Camera angle controls
+# Glance v0.4.2 — Camera angle controls
 
-Under Extended close-up, choose **Override close-up camera angle**, set **Close-up camera angle** from 0â€“100 (default 50), and set **Angle activation distance** from 0.20â€“3.00 yalms (default 1.50). Activation is independent of camera limits changed by other plugins. The 0.05-yalm exit margin remains.
+Under Extended close-up, choose **Override close-up camera angle**, set **Close-up camera angle** from 0–100 (default 50), and set **Angle activation distance** from 0.20–3.00 yalms (default 1.50). Activation is independent of camera limits changed by other plugins. The 0.05-yalm exit margin remains.
 
 The UI shows whether the angle override is active. Repeated unexpected changes to the live angle produce a possible-conflict message; this is a heuristic and cannot identify a particular plugin. Disable another plugin's angle adjustment or Glance's angle override to compare. Other camera plugins may still affect framing or run after Glance. The saved game setting is unchanged and normal camera updates resume on exit.
 
-# Glance v0.4.1 â€” Close-up camera framing
+# Glance v0.4.1 — Close-up camera framing
 
 When Extended close-up is enabled and the camera moves below its original minimum distance, Glance temporarily applies **3rd Person Camera Angle 50**. Zooming out beyond that boundary restores the angle from Character Configuration. A 0.05-yalm exit margin prevents flickering at the boundary.
 
@@ -72,9 +72,9 @@ The override uses the live camera only: Glance never changes the saved Character
 
 Build and automated threshold checks pass; visual framing and restoration still require in-game testing.
 
-# Glance v0.4.0 â€” Extended close-up
+# Glance v0.4.0 — Extended close-up
 
-Enable **Extended close-up** in `/glance` to scroll closer than the normal game minimum. **Closest camera distance** sets the scroll limit from 0.10â€“1.50 yalms (default 0.50). The existing Close-up distance slider still controls when gaze activates.
+Enable **Extended close-up** in `/glance` to scroll closer than the normal game minimum. **Closest camera distance** sets the scroll limit from 0.10–1.50 yalms (default 0.50). The existing Close-up distance slider still controls when gaze activates.
 
 During eligible third-person close-ups, Glance bypasses proximity hiding for your own character only. First-person mode remains available and intentionally hides the character; scroll out before switching perspective. Extremely small distances can put the camera inside the model: increase the slider if facial geometry clips. Camera target height is unchanged.
 
@@ -82,13 +82,13 @@ The feature starts disabled. Combat, PvP, mounts, casting, cutscenes, transition
 
 Release build and automated ownership/restoration checks pass. Close-up rendering and scroll behavior still require in-game verification. This is a custom-repository beta; extended camera bounds do not meet the official Dalamud repository publishing restrictions.
 
-## Previous: v0.3.1 â€” Joy or pose
+## Previous: v0.3.1 — Joy or pose
 
 New **Expressive** mood chooses between `/joy motion` and `/pose motion`, with no consecutive repeats. Both are available in Custom, with a default 4-second facial cleanup hold each. These are body-motion emotes: body animations finish naturally, including after zoom-out; `/straightface` resets the face only. Existing mood IDs and saved choices are preserved. Automated selection, timing, cleanup, and compatibility checks pass; in-game verification remains required.
 
 Choose Wink (classic), Playful, Friendly, Dramatic, Expressive, Custom, or Off (gaze only) in `/glance`. Available choices include wink, smile, fake smile, pucker up, amazed, taunt, joy, and pose. Random selection avoids consecutive repeats when possible.
 
-Adjust frequency from every 1â€“10 zoom-ins or distinct camera turns, the settle delay from 0â€“5 seconds, and each selected expression's duration from 0.1â€“5 seconds. Existing users keep wink, every fourth trigger, and a two-second delay by default.
+Adjust frequency from every 1–10 zoom-ins or distinct camera turns, the settle delay from 0–5 seconds, and each selected expression's duration from 0.1–5 seconds. Existing users keep wink, every fourth trigger, and a two-second delay by default.
 
 Wink retains its smile transition; other expressions return directly to `/straightface`. Sequences cannot overlap, clear on zoom-out, and discard old timers on actor replacement. Off avoids automatic facial commands. Build and checks cover selection, cadence, timing, overlap prevention, and cleanup. In-game verification is still required.
 
@@ -107,7 +107,7 @@ Source code was developed with substantial AI assistance, with design direction 
 
 ## Installation
 
-After this release and repository file are published, add this URL under `/xlsettings` â†’ Experimental â†’ Custom Plugin Repositories:
+After this release and repository file are published, add this URL under `/xlsettings` → Experimental → Custom Plugin Repositories:
 
 `https://raw.githubusercontent.com/khamass/Glance/main/repo.json`
 
