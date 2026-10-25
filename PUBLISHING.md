@@ -29,7 +29,7 @@ Increment the project version and manifest assembly version together, regenerate
 
 ## Before an official submission
 
-This custom-repository packaging does not constitute approval by Dalamud. Address the experimental native camera representation matching and expression acceptance behavior, migrate settings to the Dalamud Windowing API, adopt the supported SDK/packager with dependency locking, and perform the in-game acceptance checks in README. Follow the current official submission rules and AI disclosure policy. Official-submission descriptions and AI disclosures must be written by the human author.
+This custom-repository packaging does not constitute approval by Dalamud. Validate native gaze compatibility across supported game versions and expression acceptance behavior, migrate settings to the Dalamud Windowing API, adopt the supported SDK/packager with dependency locking, and perform the in-game acceptance checks in README. Follow the current official submission rules and AI disclosure policy. Official-submission descriptions and AI disclosures must be written by the human author.
 
 References: [custom repositories](https://dalamud.dev/plugin-publishing/custom-repositories/), [official submissions](https://github.com/goatcorp/DalamudPluginsD17), [AI policy](https://dalamud.dev/plugin-publishing/ai-policy/).
 

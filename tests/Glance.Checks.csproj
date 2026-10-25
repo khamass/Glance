@@ -19,4 +19,5 @@
     <Compile Include="..\src\AngleRecovery.cs" Link="AngleRecovery.cs" />
     <Compile Include="..\src\SettingsSaveDebounce.cs" Link="SettingsSaveDebounce.cs" />
   </ItemGroup>
+  <ItemGroup><Compile Include="..\src\GazeTracking.cs" Link="GazeTracking.cs" /><Compile Include="..\src\GposeSession.cs" Link="GposeSession.cs" /></ItemGroup>
 </Project>

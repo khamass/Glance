@@ -37,6 +37,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private bool recoveryRequired;
     private int recoveryRequest; // 1: restore saved angle, 2: keep current angle
     private bool disposed;
+    private readonly GposeSession gpose = new();
     private bool open;
     private bool active;
     private nint lastPlayer;
@@ -249,11 +250,42 @@ public sealed unsafe class Plugin : IDalamudPlugin
             SendExpression, forceNeutral);
     }
 
+    private void HandoffToGpose()
+    {
+        expressions.Discard();
+        ownsGaze = false; attemptedGaze = false; gazeSource = -1; captureFrames = 0;
+        restoreGazeFrames = 0; active = false; winkPending = false; closeZoomSeen = false;
+        winkCadence.Reset(); rotationCadence.Reset(); previousZoom = float.NaN; zoomStillSeconds = 0;
+        status = "GPose handoff: gaze and expression preserved; Glance is paused";
+        Log.Information("GPose handoff: discarded scheduled commands without releasing gaze or expression.");
+    }
+
     private void Update(IFramework framework)
     {
         if (disposed) return;
         try
         {
+            // Handle GPose before any scheduled expression or zoom-exit cleanup can execute.
+            var gposeTransition = gpose.Update(Client.IsGPosing, config.KeepPoseOnGpose && config.Enabled,
+                Objects.LocalPlayer?.Address ?? 0, ownsGaze);
+            if (Client.IsGPosing)
+            {
+                if (gposeTransition.Entered)
+                {
+                    if (gposeTransition.Preserve) HandoffToGpose();
+                    else Pause("Paused in group pose");
+                    closeUp?.Restore();
+                }
+                if (settingsSave.Due(Environment.TickCount64)) SaveConfiguration();
+                return;
+            }
+            if (gposeTransition.Exited)
+            {
+                // Reclaim only the normal-world gaze that Glance originally owned.
+                ownsGaze = gposeTransition.ReclaimGaze;
+                Pause("Leaving group pose; waiting for idle");
+                idleSeconds = 0;
+            }
             ProcessAngleRecovery();
             if (settingsSave.Due(Environment.TickCount64)) SaveConfiguration();
             UpdateCloseUp();
@@ -352,7 +384,6 @@ public sealed unsafe class Plugin : IDalamudPlugin
         lastPosition = position;
         idleSeconds = moved ? 0 : idleSeconds + Math.Clamp(dt, 0f, 0.1f);
         if (!config.Enabled) { Pause("Disabled"); return; }
-        if (Client.IsGPosing) { Pause("Paused in group pose"); return; }
         if (Client.IsPvP || Condition[ConditionFlag.InCombat] || Condition[ConditionFlag.Mounted]
             || Condition[ConditionFlag.WatchingCutscene] || Condition[ConditionFlag.WatchingCutscene78]
             || Condition[ConditionFlag.OccupiedInCutSceneEvent] || Condition[ConditionFlag.OccupiedInEvent]
@@ -400,8 +431,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
         }
         else if (ownsGaze && native->LookAt.IsFacingCamera)
         {
-            // Infer representation from the value the game actually captured.
-            // Do not assume that the portrait's world-position format applies here.
+            // Only write the world-position format after a matching native capture.
             if (captureFrames > 0)
             {
                 captureFrames--;
@@ -409,7 +439,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             }
             else if (gazeSource >= 0)
             {
-                var target = CameraVector(camera, gazeSource);
+                var target = CameraPosition(camera);
                 if (float.IsFinite(target.X) && float.IsFinite(target.Y) && float.IsFinite(target.Z))
                 {
                     gazeVector = Vector3.Lerp(gazeVector, target,
@@ -442,35 +472,14 @@ public sealed unsafe class Plugin : IDalamudPlugin
     {
         var captured = native->LookAt.CameraVector;
         var original = new Vector3(captured.X, captured.Y, captured.Z);
-        var bestError = 0.0001f;
-        for (var i = 0; i < 10; i++)
-        {
-            var error = Vector3.DistanceSquared(original, CameraVector(camera, i));
-            if (error < bestError) { bestError = error; gazeSource = i; }
-        }
+        var position = CameraPosition(camera);
+        gazeSource = GazeTracking.Matches(original, position) ? 8 : -1;
+        Log.Debug("Native gaze capture matched world position: {Matched}", gazeSource == 8);
         gazeVector = original;
     }
 
-    private static Vector3 CameraVector(Camera* camera, int source)
-    {
-        var scene = &camera->SceneCamera;
-        var direction = new Vector3(scene->LookAtVector.X - scene->Position.X,
-            scene->LookAtVector.Y - scene->Position.Y, scene->LookAtVector.Z - scene->Position.Z);
-        if (direction.LengthSquared() > 0.0001f) direction = Vector3.Normalize(direction);
-        return source switch
-        {
-            0 => new(scene->Rotation.X, scene->Rotation.Y, scene->Rotation.Z),
-            1 => direction,
-            2 => -direction,
-            3 => new(scene->Vector_1.X, scene->Vector_1.Y, scene->Vector_1.Z),
-            4 => new(scene->LookAtVector.X, scene->LookAtVector.Y, scene->LookAtVector.Z),
-            5 => new(camera->DirV, camera->DirH, 0),
-            6 => new(camera->DirH, camera->DirV, 0),
-            7 => new(0, camera->DirH, camera->DirV),
-            8 => new(scene->Position.X, scene->Position.Y, scene->Position.Z),
-            _ => new(-scene->Rotation.X, -scene->Rotation.Y, -scene->Rotation.Z),
-        };
-    }
+    private static Vector3 CameraPosition(Camera* camera) =>
+        new(camera->SceneCamera.Position.X, camera->SceneCamera.Position.Y, camera->SceneCamera.Position.Z);
 
     private void Draw()
     {
@@ -495,6 +504,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
             var changed = ImGui.Checkbox("Meet my gaze", ref config.Enabled);
             changed |= ImGui.SliderFloat("Close-up distance", ref config.Distance, 1f, 10f, "%.1f yalms");
             changed |= ImGui.SliderFloat("Gaze responsiveness", ref config.Response, 5f, 90f, "%.0f");
+            changed |= ImGui.Checkbox("Keep gaze and expression when entering GPose", ref config.KeepPoseOnGpose);
+            ImGui.TextWrapped("Hands off gaze and expression to GPose without sending reset commands. Glance resumes after leaving GPose.");
             ImGui.Spacing();
             changed |= ImGui.Checkbox("Extended close-up", ref config.ExtendedCloseUp);
             if (config.ExtendedCloseUp)
@@ -516,8 +527,6 @@ public sealed unsafe class Plugin : IDalamudPlugin
                     changed |= ImGui.SliderFloat("Angle activation distance", ref config.CloseUpAngleDistance, 0.2f, 3f, "%.2f yalms");
                     ImGui.TextWrapped("Camera angle eases in over the 0.75 yalms before this distance. Zooming out eases back to the captured setting. Disable other plugins' angle controls if they conflict.");
                     ImGui.TextUnformatted(closeUp?.AngleActive == true ? "Camera angle override: active" : "Camera angle override: waiting");
-                    if (closeUp?.PossibleAngleConflict == true)
-                        ImGui.TextWrapped("Camera angle keeps changing externally. Another camera plugin or game camera update may be overriding Glance. Disable its angle control, or turn off Glance's angle override.");
                 }
                 ImGui.TextWrapped("The activation distance is independent of camera limits modified by other plugins. If framing changes unexpectedly, compare with other camera plugins disabled.");
                 if (closeUpError != null) ImGui.TextWrapped(closeUpError);
@@ -613,7 +622,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             ImGui.TextColored(active ? new Vector4(0.39f, 0.84f, 0.79f, 1)
                 : new Vector4(0.73f, 0.76f, 0.82f, 1), status);
             if (ownsGaze && gazeSource >= 0)
-                ImGui.TextUnformatted($"Camera tracking source: {gazeSource}");
+                ImGui.TextUnformatted("Camera tracking: verified world position");
             ImGui.TextUnformatted($"Last camera distance: {distance:0.00} yalms");
             ImGui.TextWrapped("Stand still and zoom in for eye contact. Only your head and eyes follow the camera. Movement and game activity pause the gaze automatically.");
             if (expressions.CurrentName != null) ImGui.TextUnformatted("Expression: " + expressions.CurrentName);

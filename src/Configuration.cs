@@ -7,6 +7,7 @@ public sealed class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 4;
     public bool Enabled = true;
+    public bool KeepPoseOnGpose = true;
     public float Distance = 3.0f;
     public float Response = 45.0f;
     public bool ExtendedCloseUp;

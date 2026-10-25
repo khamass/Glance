@@ -62,11 +62,11 @@ By default, every fourth zoom-in or distinct camera turn can queue an expression
 - **Close-up camera angle:** temporarily use an angle from 0–100 (default 50), with a separate activation distance.
 - **Close-up transition time:** adjust angle easing from 0.10–1.50 seconds (default 0.35). Zooming out blends back and restores the captured angle.
 
-Normal activity pauses the relevant controls: combat, PvP, mounts, casting, death, transitions, cutscenes, occupied events, group pose, first person, lock-on and alternate cameras. Movement pauses gaze and expression triggers. Disabling or unloading restores owned camera limits and the captured angle immediately.
+Normal activity pauses the relevant controls: combat, PvP, mounts, casting, death, transitions, cutscenes, occupied events, group pose, first person, lock-on and alternate cameras. Movement pauses gaze and expression triggers. Disabling or unloading restores owned camera limits and the captured angle immediately. **Keep gaze and expression when entering GPose** is enabled by default: pending expression steps are discarded before GPose, so Glance does not send a gaze toggle or facial reset into the handoff. Glance resumes after leaving GPose.
 
 ## Compatibility and animation notes
 
-- Other camera plugins can overwrite zoom or angle controls. If framing jumps, compare with those controls disabled in the other plugin. Glance's conflict message is a diagnostic, not proof of a particular culprit.
+- Other camera plugins can overwrite zoom or angle controls. If framing jumps, compare with those controls disabled in the other plugin. Glance does not identify which plugin owns an overlapping camera hook.
 - Body emotes can move or turn the character, need a target, or loop. `/straightface` and hold timers reset the face only. Move manually to stop a looping body motion.
 - The close-up angle temporarily changes the actual Character Configuration setting. A crash or forced termination during close-up may leave that temporary value set. Glance saves a recovery backup before overriding it; on the original character and keyboard/gamepad mode, choose **Restore saved angle** or **Keep current angle** in `/glance`. Either choice disables angle override until you explicitly enable it again. You can also adjust the angle manually in Character Configuration.
 - Game updates can require a compatible Glance/Dalamud build. Compilation and automated tests do not establish compatibility with every game state or plugin combination.
