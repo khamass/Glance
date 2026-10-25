@@ -1,3 +1,16 @@
+# Glance v1.0.2 — GPose handoff and validated gaze
+
+By Macki.
+
+- Add **Keep gaze and expression when entering GPose**, enabled by default. Glance discards scheduled expression cleanup before handing control to GPose, without sending `/facecamera` or `/straightface` on entry.
+- Resume normal gaze handling after GPose exit, reclaiming only gaze Glance originally owned for the same character. Manually enabled gaze remains unowned.
+- Replace gaze-format guessing with the world-position representation verified against native `/facecamera` captures. Incompatible or non-finite captures leave native gaze unchanged instead of guessing another format.
+- Retain the existing v1.0.1 close-up camera implementation. Experimental camera-angle hooks and temporary test controls are excluded from this release.
+
+Release build passes with zero warnings/errors and all 368 automated checks pass. The maintainer reports GPose entry, exit, zoom-out and gaze recovery working with the cleaned build. This does not establish compatibility with every game state or camera plugin. Existing settings are preserved. The existing persistent camera-angle override and recovery behavior remain unchanged.
+
+Update through **Update plugins** in `/xlplugins`.
+
 # Glance v1.0.1 — Reliability update
 
 By Macki.

@@ -1,6 +1,7 @@
 using System.Numerics;
 using Glance;
 
+RuntimeSafetyChecks.Run();
 ExpressionChecks.Run();
 CloseUpChecks.Run();
 
