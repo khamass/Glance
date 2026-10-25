@@ -3,7 +3,7 @@
     "Author": "Macki",
     "Name": "Glance",
     "InternalName": "Glance",
-    "AssemblyVersion": "1.0.1.0",
+    "AssemblyVersion": "1.0.2.0",
     "Description": "Camera-facing gaze, configurable close-up framing, themed personality moods and a searchable catalog of unlocked in-game emotes. Customize facial expressions or opt into body animations. Configure with /glance. Icon created with AI assistance.",
     "Punchline": "A little eye contact. A little personality.",
     "ApplicableVersion": "any",
@@ -15,12 +15,12 @@
     ],
     "RepoUrl": "https://github.com/khamass/Glance",
     "IconUrl": "https://raw.githubusercontent.com/khamass/Glance/main/images/icon.png",
-    "Changelog": "Reliability update: settings edits preserve gaze, saves are debounced, interrupted camera-angle overrides have character/control-mode recovery, cleanup is safer, and emote pools are cached.",
+    "Changelog": "GPose handoff preserves gaze and expression without queued resets, resumes after exit, and uses validated world-position gaze tracking. Existing close-up camera behavior is retained.",
     "IsHide": false,
     "IsTestingExclusive": false,
-    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v1.0.1/Glance.zip",
-    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v1.0.1/Glance.zip",
-    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v1.0.1/Glance.zip",
-    "LastUpdate": 1792692471
+    "DownloadLinkInstall": "https://github.com/khamass/Glance/releases/download/v1.0.2/Glance.zip",
+    "DownloadLinkUpdate": "https://github.com/khamass/Glance/releases/download/v1.0.2/Glance.zip",
+    "DownloadLinkTesting": "https://github.com/khamass/Glance/releases/download/v1.0.2/Glance.zip",
+    "LastUpdate": 1792946749
   }
 ]
